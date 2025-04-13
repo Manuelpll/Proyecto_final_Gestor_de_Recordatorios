@@ -22,17 +22,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_register_login_profile
-import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_initial
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.text_to_initial
 
-@Preview
+
 @Composable
-fun LoginScreen() {
+fun LoginScreen(navegateToHome: () -> Unit, navegateToRegister: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -91,13 +89,13 @@ fun LoginScreen() {
         CustomButton(
             text = "Iniciar sesión",
             backgroundColor = button_login,
-            onClick = { /* Acción de login */ }
+            onClick = { navegateToHome() }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // Enlace a registro
-        TextButton(onClick = { /* Navegar a RegisterScreen */ }) {
+        TextButton(onClick = {navegateToRegister()}) {
             Text(
                 text = "¿No tienes cuenta? Crear una",
                 color = text_to_initial,

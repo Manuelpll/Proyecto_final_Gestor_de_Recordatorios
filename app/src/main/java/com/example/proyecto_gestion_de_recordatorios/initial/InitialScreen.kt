@@ -32,9 +32,8 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_61
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.text_to_initial
 
-@Preview
 @Composable
-fun InitialScreen() {
+fun InitialScreen(navegateToRegister: () -> Unit, navegateToLogin: () -> Unit) {
     val colorsGradient = arrayOf(
         0.0f to initial_61,
         1.0f to initial_28
@@ -54,11 +53,11 @@ fun InitialScreen() {
             text = "Gestor de recordatorios",
             fontSize = 29.sp,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth() // Asegúrate de que tenga espacio para centrarse
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(20.dp))
         Button(
-            onClick = {},
+            onClick = {navegateToLogin()},
             modifier = Modifier
                 .height(60.dp)
                 .width(220.dp),
@@ -72,7 +71,7 @@ fun InitialScreen() {
         }
 
         Spacer(modifier = Modifier.height(40.dp))
-        TextButton(onClick = {}) {
+        TextButton(onClick = {navegateToRegister()}) {
             Text(
                 text = "Crear cuenta",
                 color = text_to_initial,

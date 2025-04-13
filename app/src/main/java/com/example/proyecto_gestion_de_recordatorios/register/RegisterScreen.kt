@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -42,7 +41,7 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.register_button
 
 @Preview
 @Composable
-fun RegisterScreen() {
+fun RegisterScreen(navegateToLogin: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -132,7 +131,7 @@ fun RegisterScreen() {
         CustomButton(
             text = "Crear cuenta",
             backgroundColor = register_button,
-            onClick = { /* Acción para registrar usuario */ },
+            onClick = { navegateToLogin() },
             modifier = Modifier.height(55.dp) // puedes pasar modificadores específicos aquí si quieres
         )
     }
