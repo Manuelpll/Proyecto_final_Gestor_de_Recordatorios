@@ -30,30 +30,84 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_reminder
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.style.TextAlign
+import com.example.proyecto_gestion_de_recordatorios.data.Reminder
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun HomeScreen() {
     val reminderList = listOf(
-        Reminder("Comprar leche", "Compras", "Alta", "09:00"),
-        Reminder("Estudiar Kotlin", "Estudios", "Media", "16:30"),
-        Reminder("Llamar al médico", "Personal", "Baja", "18:00")
+        Reminder("Charla formación", "Trabajo", "4/04", Color(0xFFF1C4BC), Color.Red),
+        Reminder("Charla formación", "Salud", "4/04", Color(0xFF4CAF50), Color.Yellow),
+        Reminder("Charla formación", "Educación", "4/04", Color(0xFFB2EBF2), Color.Cyan),
+        Reminder("Charla formación", "Reunión", "4/04", Color(0xFF9575CD), Color.Magenta),
+        Reminder("Charla formación", "Evento", "4/04", Color(0xFFFFEB3B), Color.Green)
     )
+    var expanded by remember { mutableStateOf(false)}
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Recordatorios", color = Color.Black) }, modifier = Modifier.background(bar)
+                modifier = Modifier.background(bar),
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(Icons.Default.Menu, contentDescription = "Menú", tint = Color.Black)
+                            }
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Mis Recordatorios") },
+                                    onClick = { expanded = false /* Acción */ }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Amigos") },
+                                    onClick = { expanded = false /* Acción */ }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Categorías Creadas") },
+                                    onClick = { expanded = false /* Acción */ }
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Mis Recordatorios",
+                            color = Color.Black,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center
+                        )
+                        IconButton(onClick = {}, modifier = Modifier.size(70.dp)){
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = "Perfil",
+                            modifier = Modifier.size(70.dp)
+                                .padding(end= 20.dp),
+                            tint = Color.Black
+                        )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = bar)
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* Navegar a NewReminderScreen */ },
-                containerColor = floating_button_reminder
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir recordatorio", tint = Color.White)
-            }
         },
         containerColor = background_home
     ) { innerPadding ->
@@ -74,25 +128,44 @@ fun HomeScreen() {
 
 @Composable
 fun ReminderCard(reminder: Reminder) {
-    Card(
+    Box(
         modifier = Modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = background_rnrfc),
-        elevation = CardDefaults.cardElevation(4.dp)
+            .fillMaxWidth()
+            .height(60.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = reminder.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Categoría: ${reminder.category}")
-            Text("Prioridad: ${reminder.priority}")
-            Text("Hora: ${reminder.time}")
+        Card(
+            modifier = Modifier.fillMaxSize(),
+            colors = CardDefaults.cardColors(
+                containerColor = reminder.backgroundColor
+            ),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = reminder.title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = reminder.date,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal
+                )
+            }
         }
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+                .size(12.dp)
+                .background(reminder.categoryColor, shape = RectangleShape)
+        )
     }
 }
-
-data class Reminder(
-    val title: String,
-    val category: String,
-    val priority: String,
-    val time: String
-)
