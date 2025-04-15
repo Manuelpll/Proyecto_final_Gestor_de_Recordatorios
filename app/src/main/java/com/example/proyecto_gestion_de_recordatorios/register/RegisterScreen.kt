@@ -39,7 +39,7 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_registe
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.default_button_color
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.register_button
 
-@Preview
+
 @Composable
 fun RegisterScreen(navegateToLogin: () -> Unit) {
     var name by remember { mutableStateOf("") }
