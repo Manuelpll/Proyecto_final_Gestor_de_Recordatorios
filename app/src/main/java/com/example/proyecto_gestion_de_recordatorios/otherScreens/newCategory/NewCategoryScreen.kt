@@ -79,6 +79,7 @@ fun NewCategoryScreen() {
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(140.dp))
                 Text(
                     text = "Nueva Categoría",
                     textDecoration = TextDecoration.Underline,
@@ -110,28 +111,22 @@ fun NewCategoryScreen() {
                     Color.Black
                 )
                 var colorIndex by remember { mutableStateOf(0f) }
+    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically){
+    Text("Color", fontSize = 16.sp, color = Color.Black)
+        Spacer( modifier = Modifier.padding(start = 30.dp))
+    Slider(
+        value = colorIndex,
+        onValueChange = { colorIndex = it },
+        valueRange = 0f..(colorOptions.size - 1).toFloat(),
+        steps = colorOptions.size - 2,
+        modifier = Modifier.fillMaxWidth(0.6f),
+        colors = SliderDefaults.colors(
+            thumbColor = colorOptions[colorIndex.toInt()],
+            activeTrackColor = colorOptions[colorIndex.toInt()],
+            inactiveTrackColor = Color.LightGray
+        )
+    )}
 
-                Text("Color", fontSize = 16.sp, color = Color.Black)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(50.dp)
-                        .background(colorOptions[colorIndex.toInt()])
-                        .border(1.dp, Color.Black)
-                )
-
-                Slider(
-                    value = colorIndex,
-                    onValueChange = { colorIndex = it },
-                    valueRange = 0f..(colorOptions.size - 1).toFloat(),
-                    steps = colorOptions.size - 2,
-                    modifier = Modifier.fillMaxWidth(0.8f),
-                    colors = SliderDefaults.colors(
-                        thumbColor = colorOptions[colorIndex.toInt()],
-                        activeTrackColor = colorOptions[colorIndex.toInt()],
-                        inactiveTrackColor = Color.LightGray
-                    )
-                )
 
                 // Botones
                 Row(

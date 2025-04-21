@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_register_login_profile
-import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login
+import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login_newfriend
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.text_to_initial
 
 
@@ -88,7 +88,7 @@ fun LoginScreen(navegateToHome: () -> Unit, navegateToRegister: () -> Unit) {
         // Botón Iniciar Sesión
         CustomButton(
             text = "Iniciar sesión",
-            backgroundColor = button_login,
+            backgroundColor = button_login_newfriend,
             onClick = { navegateToHome() }
         )
 
