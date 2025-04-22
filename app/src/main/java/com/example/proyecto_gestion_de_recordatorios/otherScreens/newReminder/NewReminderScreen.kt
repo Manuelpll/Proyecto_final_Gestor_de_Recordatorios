@@ -1,8 +1,6 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.newReminder
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -23,8 +21,7 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.newreminder_select
 
 @Preview
 @Composable
-fun NewReminderScreen(
-) {
+fun NewReminderScreen(navegateToReminder: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("") }

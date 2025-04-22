@@ -56,7 +56,7 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Preview
 @Composable
-fun FriendScreen() {
+fun FriendScreen(navegateToNewFriend: () -> Unit, navegateToProfile: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val friends = listOf("María López", "Carlos Pérez", "Laura Sánchez", "David Gómez")
     Scaffold(

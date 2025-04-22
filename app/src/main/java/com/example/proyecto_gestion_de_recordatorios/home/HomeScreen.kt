@@ -40,7 +40,13 @@ import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    navegateToReminder: () -> Unit,
+    navegateToFriends: () -> Unit,
+    navegateToCategory: () -> Unit,
+    navegateToSelectedReminder: () -> Unit,
+    navegateToProfile: () -> Unit
+) {
     val recordatorioLists = listOf(
         Recordatorio("Charla formación", "Trabajo", "4/04", Color(0xFFF1C4BC), Color.Red),
         Recordatorio("Charla formación", "Salud", "4/04", Color(0xFF4CAF50), Color.Yellow),

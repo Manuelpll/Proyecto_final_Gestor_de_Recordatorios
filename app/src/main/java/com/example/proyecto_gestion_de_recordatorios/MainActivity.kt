@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.proyecto_gestion_de_recordatorios.navegation.NavegationWrapper
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.Proyecto_Gestion_de_RecordatoriosTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,7 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Proyecto_Gestion_de_RecordatoriosTheme {
-
+                NavegationWrapper()
             }
         }
     }

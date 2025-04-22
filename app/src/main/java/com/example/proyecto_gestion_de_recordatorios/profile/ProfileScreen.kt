@@ -25,7 +25,7 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_profile_cer
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navegateToInitial: () -> Unit) {
     Scaffold(
         bottomBar = {
             BottomAppBar(
