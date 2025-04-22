@@ -44,7 +44,6 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_re
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview
 @Composable
 fun ReminderScreen(
     navegateToNewReminder: () -> Unit,

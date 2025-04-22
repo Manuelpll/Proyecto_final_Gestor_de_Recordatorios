@@ -54,7 +54,6 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview
 @Composable
 fun FriendScreen(navegateToNewFriend: () -> Unit, navegateToProfile: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
