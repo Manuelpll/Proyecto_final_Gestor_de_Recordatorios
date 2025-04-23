@@ -51,9 +51,13 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_ca
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview
 @Composable
-fun CategoryScreen(navegateToNewCategory: () -> Unit) {
+fun CategoryScreen(
+    navegateToNewCategory: () -> Unit,
+    navegateToProfile: () -> Unit,
+    navegateToCategory: () -> Unit,
+    navegateToReminder: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {

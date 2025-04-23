@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.LazyColumn
@@ -55,7 +54,11 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun FriendScreen(navegateToNewFriend: () -> Unit, navegateToProfile: () -> Unit) {
+fun FriendScreen(
+    navegateToNewFriend: () -> Unit,
+    navegateToProfile: () -> Unit,
+    navegateToReminder: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     val friends = listOf("María López", "Carlos Pérez", "Laura Sánchez", "David Gómez")
     Scaffold(
