@@ -4,6 +4,6 @@ data class Usuario(
     val nombre:String,
     val email:String?=null,
     val contactos:List<String>? = null,
-    val contraseña:String,
+    val contraseña:String? = null,
     val recordatorios_disponibles:List<String>? = null
 )
