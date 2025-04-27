@@ -12,7 +12,9 @@ composeBom = "2024.04.01"
 materialIconsExtended = "1.7.7"
 navigationCompose = "2.8.2"
 kotlinxSerialization = "1.6.3"
-
+firebaseBom="33.1.1"
+services="4.4.2"
+crashlytics="3.0.2"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -31,10 +33,14 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 #navegacion
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-
+#Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-crashlytics= {module="com.google.firebase:firebase-crashlytics"}
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 #navegacion
 jetbrainsKotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-
+#Firebase
+googleServise={id="com.google.gms.google-services", version.ref="services"}
+crashlytics={id="com.google.firebase.crashlytics", version.ref="crashlytics"}
