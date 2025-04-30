@@ -32,16 +32,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_register_login_profile
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.default_button_color
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.register_button
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
-fun RegisterScreen(navegateToLogin: () -> Unit) {
+fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

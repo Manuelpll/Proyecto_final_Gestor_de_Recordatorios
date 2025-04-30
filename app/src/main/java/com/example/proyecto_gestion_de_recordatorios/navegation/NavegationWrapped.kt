@@ -1,13 +1,15 @@
 package com.example.proyecto_gestion_de_recordatorios.navegation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.example.proyecto_gestion_de_recordatorios.home.HomeScreen
 import com.example.proyecto_gestion_de_recordatorios.initial.InitialScreen
 import com.example.proyecto_gestion_de_recordatorios.login.LoginScreen
+import com.example.proyecto_gestion_de_recordatorios.login.LoginViewModel
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.category.CategoryScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.friend.FriendScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.newReminder.NewReminderScreen
@@ -15,10 +17,11 @@ import com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder.Remin
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedReminder.SelectedReminderScreen
 import com.example.proyecto_gestion_de_recordatorios.profile.ProfileScreen
 import com.example.proyecto_gestion_de_recordatorios.register.RegisterScreen
-@Preview
+import com.google.firebase.auth.FirebaseAuth
+
 @Composable
-fun NavegationWrapper() {
-    val navController = rememberNavController()
+fun NavegationWrapper(navControler: NavHostController, auth: FirebaseAuth) {
+    val navController = navControler
     NavHost(navController = navController, startDestination = InitialScreen) {
 
         composable<InitialScreen> {
@@ -30,13 +33,17 @@ fun NavegationWrapper() {
 
         composable<RegisterScreen>{
          RegisterScreen(
-             navegateToLogin= {navController.navigate(LoginScreen)}
+             navegateToLogin= {navController.navigate(LoginScreen)},
+             auth
          )
         }
         composable<LoginScreen>{
+         val loginViewModel = remember { LoginViewModel(auth) }
+
          LoginScreen(
              navegateToHome={navController.navigate(HomeScreen)},
-             navegateToRegister={navController.navigate(RegisterScreen)}
+             navegateToRegister={navController.navigate(RegisterScreen)},
+             viewModel = loginViewModel
          )
         }
         composable<HomeScreen>{
@@ -53,13 +60,13 @@ fun NavegationWrapper() {
                 navegateToInitial= {navController.navigate(InitialScreen)}
             )
         }
-//        composable<ReminderScreen>{
-//        ReminderScreen(
-//            navegateToNewReminder={navController.navigate(NewReminderScreen)},
-//            navegateToSelectedReminder= {navController.navigate(SelectedReminderScreen)},
-//            navegateToProfile= {navController.navigate(ProfileScreen)}
-//         )
-//        }
+        composable<ReminderScreen>{
+        ReminderScreen(
+            navegateToNewReminder={navController.navigate(NewReminderScreen)},
+            navegateToSelectedReminder= {navController.navigate(SelectedReminderScreen)},
+            navegateToProfile= {navController.navigate(ProfileScreen)}
+         )
+        }
 
         composable<SelectedReminderScreen>{
             SelectedReminderScreen(

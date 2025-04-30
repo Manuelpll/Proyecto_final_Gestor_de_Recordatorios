@@ -31,9 +31,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_initial
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_61
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.text_to_initial
-
+@Preview
 @Composable
-fun InitialScreen(navegateToRegister: () -> Unit, navegateToLogin: () -> Unit) {
+fun InitialScreen(navegateToRegister: () -> Unit={}, navegateToLogin: () -> Unit={}) {
     val colorsGradient = arrayOf(
         0.0f to initial_61,
         1.0f to initial_28

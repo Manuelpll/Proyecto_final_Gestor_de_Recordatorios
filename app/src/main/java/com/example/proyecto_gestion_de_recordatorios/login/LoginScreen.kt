@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -22,18 +23,29 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import com.example.proyecto_gestion_de_recordatorios.register.CustomButton
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_register_login_profile
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login_newfriend
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.text_to_initial
-
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun LoginScreen(navegateToHome: () -> Unit, navegateToRegister: () -> Unit) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+fun LoginScreen(
+    navegateToHome: () -> Unit?={},
+    navegateToRegister: () -> Unit?={},
+    viewModel: LoginViewModel
+) {
+    // Navegación automática si login fue exitoso
+    if (viewModel.loginSuccess.value) {
+        LaunchedEffect(Unit) {
+            navegateToHome()
+            viewModel.loginSuccess.value = false // Reseteamos para futuras veces
+        }
+    }
 
     Column(
         verticalArrangement = Arrangement.Top,
@@ -54,10 +66,9 @@ fun LoginScreen(navegateToHome: () -> Unit, navegateToRegister: () -> Unit) {
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Campo correo electrónico
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = viewModel.email.value,
+            onValueChange = { viewModel.email.value = it },
             label = { Text("Correo electrónico") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -66,18 +77,17 @@ fun LoginScreen(navegateToHome: () -> Unit, navegateToRegister: () -> Unit) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Campo contraseña
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = viewModel.password.value,
+            onValueChange = { viewModel.password.value = it },
             label = { Text("Contraseña") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (viewModel.passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                val icon = if (viewModel.passwordVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val description = if (viewModel.passwordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
+                IconButton(onClick = { viewModel.passwordVisible.value = !viewModel.passwordVisible.value }) {
                     Icon(imageVector = icon, contentDescription = description)
                 }
             }
@@ -85,17 +95,15 @@ fun LoginScreen(navegateToHome: () -> Unit, navegateToRegister: () -> Unit) {
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Botón Iniciar Sesión
         CustomButton(
             text = "Iniciar sesión",
             backgroundColor = button_login_newfriend,
-            onClick = { navegateToHome() }
+            onClick = { viewModel.onLoginClick() }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Enlace a registro
-        TextButton(onClick = {navegateToRegister()}) {
+        TextButton(onClick = { navegateToRegister() }) {
             Text(
                 text = "¿No tienes cuenta? Crear una",
                 color = text_to_initial,
@@ -104,21 +112,19 @@ fun LoginScreen(navegateToHome: () -> Unit, navegateToRegister: () -> Unit) {
             )
         }
     }
-}
-@Composable
-fun CustomButton(
-    text: String,
-    backgroundColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor, contentColor = Color.Black),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(50.dp)
-    ) {
-        Text(text = text, fontSize = 16.sp)
+
+    if (viewModel.showErrorDialog.value) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showErrorDialog.value = false },
+            title = { Text(text = "Error de inicio de sesión") },
+            text = { Text(text = viewModel.errorMessage.value) },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.showErrorDialog.value = false }
+                ) {
+                    Text("Aceptar")
+                }
+            }
+        )
     }
 }

@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.jetbrainsKotlinSerialization)
-    alias(libs.plugins.googleServise)
+    alias(libs.plugins.googleServices)
     alias(libs.plugins.crashlytics)
 }
 
@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation( "androidx.compose.material:material-icons-extended:1.5.4")
     //Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
-    implementation ("com.google.firebase:firebase-crashlytics")
+    implementation(platform(libs.firebase.bom))
+    implementation (libs.google.firebase.crashlytics)
+    implementation(libs.firebase.auth.ktx)
 }
