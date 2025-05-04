@@ -38,7 +38,6 @@ import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 fun HomeScreen(
     navegateToReminder: () -> Unit,
@@ -96,7 +95,7 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.Center
                         )
-                        IconButton(onClick = {}, modifier = Modifier.size(70.dp)){
+                        IconButton(onClick = { navegateToProfile()}, modifier = Modifier.size(70.dp)){
                         Icon(
                             Icons.Default.AccountCircle,
                             contentDescription = "Perfil",

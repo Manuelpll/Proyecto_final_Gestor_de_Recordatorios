@@ -2,7 +2,6 @@ package com.example.proyecto_gestion_de_recordatorios.navegation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,83 +15,88 @@ import com.example.proyecto_gestion_de_recordatorios.otherScreens.newReminder.Ne
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder.ReminderScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedReminder.SelectedReminderScreen
 import com.example.proyecto_gestion_de_recordatorios.profile.ProfileScreen
+import com.example.proyecto_gestion_de_recordatorios.profile.ProfileViewModel
 import com.example.proyecto_gestion_de_recordatorios.register.RegisterScreen
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun NavegationWrapper(navControler: NavHostController, auth: FirebaseAuth) {
-    val navController = navControler
-    NavHost(navController = navController, startDestination = InitialScreen) {
+    NavHost(navController = navControler, startDestination = InitialScreen) {
 
         composable<InitialScreen> {
-        InitialScreen(
-                navegateToRegister={navController.navigate(RegisterScreen)},
-                navegateToLogin= { navController.navigate(LoginScreen)}
+            InitialScreen(
+                navegateToRegister = { navControler.navigate(RegisterScreen) },
+                navegateToLogin = { navControler.navigate(LoginScreen) }
             )
         }
 
-        composable<RegisterScreen>{
-         RegisterScreen(
-             navegateToLogin= {navController.navigate(LoginScreen)},
-             auth
-         )
-        }
-        composable<LoginScreen>{
-         val loginViewModel = remember { LoginViewModel(auth) }
-
-         LoginScreen(
-             navegateToHome={navController.navigate(HomeScreen)},
-             navegateToRegister={navController.navigate(RegisterScreen)},
-             viewModel = loginViewModel
-         )
-        }
-        composable<HomeScreen>{
-         HomeScreen(
-                navegateToProfile= {navController.navigate(ProfileScreen)},
-                navegateToReminder={navController.navigate(ReminderScreen)},
-                navegateToFriends= {navController.navigate(FriendScreen)},
-                navegateToCategory= {navController.navigate(CategoryScreen)},
-                navegateToSelectedReminder= {navController.navigate(SelectedReminderScreen)}
+        composable<RegisterScreen> {
+            RegisterScreen(
+                navegateToLogin = { navControler.navigate(LoginScreen) },
+                auth
             )
         }
-        composable<ProfileScreen>{
+        composable<LoginScreen> {
+            val loginViewModel = remember { LoginViewModel(auth) }
+
+            LoginScreen(
+                navegateToHome = { navControler.navigate(HomeScreen) },
+                navegateToRegister = { navControler.navigate(RegisterScreen) },
+                viewModel = loginViewModel
+            )
+        }
+        composable<HomeScreen> {
+            HomeScreen(
+                navegateToProfile = { navControler.navigate(ProfileScreen) },
+                navegateToReminder = { navControler.navigate(ReminderScreen) },
+                navegateToFriends = { navControler.navigate(FriendScreen) },
+                navegateToCategory = { navControler.navigate(CategoryScreen) },
+                navegateToSelectedReminder = { navControler.navigate(SelectedReminderScreen) }
+            )
+        }
+        composable<ProfileScreen> {
+            val profileViewModel = remember { ProfileViewModel(auth) }
             ProfileScreen(
-                navegateToInitial= {navController.navigate(InitialScreen)}
+                viewModel = profileViewModel,
+                navigateToInitial = {navControler.navigate(InitialScreen)}
             )
         }
-        composable<ReminderScreen>{
-        ReminderScreen(
-            navegateToNewReminder={navController.navigate(NewReminderScreen)},
-            navegateToSelectedReminder= {navController.navigate(SelectedReminderScreen)},
-            navegateToProfile= {navController.navigate(ProfileScreen)}
-         )
+        composable<ReminderScreen> {
+            ReminderScreen(
+                navegateToNewReminder = { navControler.navigate(NewReminderScreen) },
+                navegateToSelectedReminder = { navControler.navigate(SelectedReminderScreen) },
+                navegateToProfile = { navControler.navigate(ProfileScreen) },
+                navegateToCategory = { navControler.navigate(CategoryScreen) },
+                navegateToFriend = { navControler.navigate(FriendScreen) }
+            )
         }
 
-        composable<SelectedReminderScreen>{
+        composable<SelectedReminderScreen> {
             SelectedReminderScreen(
-                navegateToProfile={navController.navigate(ProfileScreen)},
-                navegateToCategory={navController.navigate(CategoryScreen)},
-                navegateToFriend={navController.navigate(FriendScreen)}
+                navegateToProfile = { navControler.navigate(ProfileScreen) },
+                navegateToCategory = { navControler.navigate(CategoryScreen) },
+                navegateToFriend = { navControler.navigate(FriendScreen) },
+                navegateToHome={navControler.navigate(HomeScreen)}
             )
         }
-        composable<NewReminderScreen>{
-            NewReminderScreen (
-            navegateToReminder={navController.navigate(ReminderScreen)}
+        composable<NewReminderScreen> {
+            NewReminderScreen(
+                navegateToReminder = { navControler.navigate(ReminderScreen) }
             )
         }
-        composable<FriendScreen>{
+        composable<FriendScreen> {
             FriendScreen(
-                navegateToNewFriend={navController.navigate(NewFriendScreen)},
-                navegateToProfile= {navController.navigate(ProfileScreen)},
-                navegateToReminder={navController.navigate(ReminderScreen)}
+                navegateToNewFriend = { navControler.navigate(NewFriendScreen) },
+                navegateToProfile = { navControler.navigate(ProfileScreen) },
+                navegateToReminder = { navControler.navigate(ReminderScreen) }
             )
         }
-        composable<CategoryScreen>{
+        composable<CategoryScreen> {
             CategoryScreen(
-                navegateToNewCategory={navController.navigate(NewCategoryScreen)},
-                navegateToProfile= {navController.navigate(ProfileScreen)},
-                navegateToCategory={navController.navigate(CategoryScreen)},
-                navegateToReminder={navController.navigate(ReminderScreen)}
+                navegateToNewCategory = { navControler.navigate(NewCategoryScreen) },
+                navegateToProfile = { navControler.navigate(ProfileScreen) },
+                navegateToCategory = { navControler.navigate(CategoryScreen) },
+                navegateToReminder = { navControler.navigate(ReminderScreen) }
             )
         }
 

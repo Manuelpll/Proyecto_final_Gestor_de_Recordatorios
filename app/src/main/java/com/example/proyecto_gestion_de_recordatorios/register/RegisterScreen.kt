@@ -1,5 +1,6 @@
 package com.example.proyecto_gestion_de_recordatorios.register
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -40,12 +42,14 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.register_button
 import com.google.firebase.auth.FirebaseAuth
 
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf(false) }
 
     Column(
         verticalArrangement = Arrangement.Top,
@@ -65,7 +69,6 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
 
         Spacer(modifier = Modifier.height(40.dp))
 
-
         OutlinedTextField(
             value = name,
             onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) name = it },
@@ -74,7 +77,6 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-
 
         OutlinedTextField(
             value = email,
@@ -85,7 +87,6 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-
 
         OutlinedTextField(
             value = password,
@@ -131,12 +132,36 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
         CustomButton(
             text = "Crear cuenta",
             backgroundColor = register_button,
-            onClick = { navegateToLogin() },
-            modifier = Modifier.height(55.dp) // puedes pasar modificadores específicos aquí si quieres
+            onClick = {
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            navegateToLogin()
+                        } else {
+                            showErrorDialog = true
+                        }
+                    }
+            },
+            modifier = Modifier.height(55.dp)
+        )
+    }
+
+    // AlertDialog fuera del Column para que no dé problemas de recomposición
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = { Text(text = "Error al crear cuenta") },
+            text = { Text(text = "No se ha podido crear el usuario. Intente de nuevo.") },
+            confirmButton = {
+                Button(
+                    onClick = { showErrorDialog = false }
+                ) {
+                    Text("Aceptar")
+                }
+            }
         )
     }
 }
-
 @Composable
 fun CustomButton(
     text: String,
@@ -154,3 +179,5 @@ fun CustomButton(
         Text(text = text, fontSize = 16.sp)
     }
 }
+
+

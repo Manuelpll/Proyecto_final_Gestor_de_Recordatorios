@@ -52,7 +52,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
@@ -67,7 +66,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.reminder_compatir
 fun ReminderScreen(
     navegateToNewReminder: () -> Unit,
     navegateToSelectedReminder: () -> Unit,
-    navegateToProfile: () -> Unit
+    navegateToProfile: () -> Unit,
+    navegateToCategory: () -> Unit,
+    navegateToFriend: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val recordatorios = listOf(

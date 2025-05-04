@@ -12,6 +12,12 @@ class LoginViewModel(private val auth: FirebaseAuth) : ViewModel()  {
     var loginSuccess = mutableStateOf(false)
 
     fun onLoginClick() {
+        if (email.value.isBlank() || password.value.isBlank()) {
+            errorMessage.value = "Por favor, introduce un correo y una contraseña."
+            showErrorDialog.value = true
+            return
+        }
+
         auth.signInWithEmailAndPassword(email.value, password.value)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {

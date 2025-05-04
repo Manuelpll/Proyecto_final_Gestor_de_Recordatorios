@@ -42,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
@@ -56,7 +55,8 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_re
 fun SelectedReminderScreen(
     navegateToProfile: () -> Unit,
     navegateToCategory: () -> Unit,
-    navegateToFriend: () -> Unit
+    navegateToFriend: () -> Unit,
+    navegateToHome: () -> Unit
 ) {
     // Recordatorio de ejemplo
     val ejemploRecordatorio = Recordatorio(
