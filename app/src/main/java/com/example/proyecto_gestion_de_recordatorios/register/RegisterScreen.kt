@@ -1,6 +1,9 @@
 package com.example.proyecto_gestion_de_recordatorios.register
 
 import android.annotation.SuppressLint
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +39,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_register_login_profile
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.default_button_color
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.register_button
@@ -44,12 +48,15 @@ import com.google.firebase.auth.FirebaseAuth
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var showErrorDialog by remember { mutableStateOf(false) }
+fun RegisterScreen(
+    viewModel: RegisterViewModel = hiltViewModel(),
+    navigateToLogin: () -> Unit
+) {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.onImageSelected(it) }
+    }
 
     Column(
         verticalArrangement = Arrangement.Top,
@@ -70,8 +77,8 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
         Spacer(modifier = Modifier.height(40.dp))
 
         OutlinedTextField(
-            value = name,
-            onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) name = it },
+            value = viewModel.nombre,
+            onValueChange = { if (it.all { c -> c.isLetter() || c.isWhitespace() }) viewModel.onNombreChange(it) },
             label = { Text("Nombre") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -79,8 +86,8 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
         Spacer(modifier = Modifier.height(20.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = viewModel.email,
+            onValueChange = { viewModel.onEmailChange(it) },
             label = { Text("Correo electrónico") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
@@ -88,15 +95,15 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        var passwordVisible by remember { mutableStateOf(false) }
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = viewModel.password,
+            onValueChange = { viewModel.onPasswordChange(it) },
             label = { Text("Contraseña") },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                 val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(imageVector = icon, contentDescription = description)
                 }
@@ -116,7 +123,7 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
             CustomButton(
                 text = "Adjuntar Imagen",
                 backgroundColor = default_button_color,
-                onClick = { /* Acción para seleccionar imagen */ },
+                onClick = { launcher.launch("image/*") },
                 modifier = Modifier.weight(0.7f)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -133,28 +140,22 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
             text = "Crear cuenta",
             backgroundColor = register_button,
             onClick = {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            navegateToLogin()
-                        } else {
-                            showErrorDialog = true
-                        }
-                    }
+                viewModel.registerUser {
+                    navigateToLogin()
+                }
             },
             modifier = Modifier.height(55.dp)
         )
     }
 
-    // AlertDialog fuera del Column para que no dé problemas de recomposición
-    if (showErrorDialog) {
+    if (viewModel.showErrorDialog) {
         AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
+            onDismissRequest = { viewModel.showErrorDialog = false },
             title = { Text(text = "Error al crear cuenta") },
             text = { Text(text = "No se ha podido crear el usuario. Intente de nuevo.") },
             confirmButton = {
                 Button(
-                    onClick = { showErrorDialog = false }
+                    onClick = { viewModel.showErrorDialog = false }
                 ) {
                     Text("Aceptar")
                 }
@@ -162,6 +163,7 @@ fun RegisterScreen(navegateToLogin: () -> Unit, auth: FirebaseAuth) {
         )
     }
 }
+
 @Composable
 fun CustomButton(
     text: String,

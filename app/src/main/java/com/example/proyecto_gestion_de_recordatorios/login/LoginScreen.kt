@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.proyecto_gestion_de_recordatorios.register.CustomButton
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_register_login_profile
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login_newfriend
@@ -35,15 +36,15 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LoginScreen(
-    navegateToHome: () -> Unit?={},
-    navegateToRegister: () -> Unit?={},
-    viewModel: LoginViewModel
+    navegateToHome: () -> Unit = {},
+    navegateToRegister: () -> Unit = {},
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
     // Navegación automática si login fue exitoso
-    if (viewModel.loginSuccess.value) {
+    if (viewModel.loginSuccess) {
         LaunchedEffect(Unit) {
             navegateToHome()
-            viewModel.loginSuccess.value = false // Reseteamos para futuras veces
+            viewModel.loginSuccess = false // Reseteamos para futuras veces
         }
     }
 
@@ -67,8 +68,8 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(40.dp))
 
         OutlinedTextField(
-            value = viewModel.email.value,
-            onValueChange = { viewModel.email.value = it },
+            value = viewModel.email,
+            onValueChange = { viewModel.onEmailChange(it) },
             label = { Text("Correo electrónico") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -78,16 +79,16 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         OutlinedTextField(
-            value = viewModel.password.value,
-            onValueChange = { viewModel.password.value = it },
+            value = viewModel.password,
+            onValueChange = { viewModel.onPasswordChange(it) },
             label = { Text("Contraseña") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            visualTransformation = if (viewModel.passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (viewModel.passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val icon = if (viewModel.passwordVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                val description = if (viewModel.passwordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
-                IconButton(onClick = { viewModel.passwordVisible.value = !viewModel.passwordVisible.value }) {
+                val icon = if (viewModel.passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val description = if (viewModel.passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                IconButton(onClick = { viewModel.togglePasswordVisibility() }) {
                     Icon(imageVector = icon, contentDescription = description)
                 }
             }
@@ -113,14 +114,14 @@ fun LoginScreen(
         }
     }
 
-    if (viewModel.showErrorDialog.value) {
+    if (viewModel.showErrorDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.showErrorDialog.value = false },
+            onDismissRequest = { viewModel.dismissErrorDialog() },
             title = { Text(text = "Error de inicio de sesión") },
-            text = { Text(text = viewModel.errorMessage.value) },
+            text = { Text(text = viewModel.errorMessage) },
             confirmButton = {
                 Button(
-                    onClick = { viewModel.showErrorDialog.value = false }
+                    onClick = { viewModel.dismissErrorDialog() }
                 ) {
                     Text("Aceptar")
                 }
