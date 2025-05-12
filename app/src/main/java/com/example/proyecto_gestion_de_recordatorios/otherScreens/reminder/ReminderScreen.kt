@@ -2,6 +2,7 @@ package com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
@@ -64,18 +68,23 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.reminder_compatir
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ReminderScreen(
+    viewModel: ReminderViewModel = hiltViewModel(),
     navegateToNewReminder: () -> Unit,
-    navegateToSelectedReminder: () -> Unit,
+    navegateToSelectedReminder: (String) -> Unit,
     navegateToProfile: () -> Unit,
     navegateToCategory: () -> Unit,
     navegateToFriend: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val recordatorios = listOf(
-        Recordatorio("Reunión", "13/05/2025", "En la reunión vamos a comentar sobre el balance semanal", Color.LightGray, Color.Red),
-        Recordatorio("Conferencia", "10/05/2025", "Vamos a comentar sobre el balance semanal sobre e...", Color.LightGray, Color.Blue, compartidoPor = "Pablo", esta_Compartido = true),
-        Recordatorio("Peluquería", "07/05/2025", "En la reunión vamos a comentar sobre el balance semanal", Color.LightGray, Color.Green)
-    )
+    val recordatorios by remember { derivedStateOf {
+        viewModel.recordatorios.filter { it.titulo?.contains(viewModel.searchQuery.value, ignoreCase = true) == true }
+    }}
+    val searchQuery by viewModel.searchQuery
+
+    LaunchedEffect(Unit) {
+        viewModel.cargarRecordatorios()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,18 +107,15 @@ fun ReminderScreen(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
-                                DropdownMenuItem(
-                                    text = { Text("Home") },
-                                    onClick = { expanded = false /* Acción */ }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Amigos") },
-                                    onClick = { expanded = false /* Acción */ }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Categorías Creadas") },
-                                    onClick = { expanded = false /* Acción */ }
-                                )
+                                DropdownMenuItem(text = { Text("Home") }, onClick = { expanded = false })
+                                DropdownMenuItem(text = { Text("Amigos") }, onClick = {
+                                    expanded = false
+                                    navegateToFriend()
+                                })
+                                DropdownMenuItem(text = { Text("Categorías Creadas") }, onClick = {
+                                    expanded = false
+                                    navegateToCategory()
+                                })
                             }
                         }
                         Text(
@@ -120,12 +126,11 @@ fun ReminderScreen(
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.Center
                         )
-                        IconButton(onClick = {}, modifier = Modifier.size(70.dp)) {
+                        IconButton(onClick = { navegateToProfile() }, modifier = Modifier.size(70.dp)) {
                             Icon(
                                 Icons.Default.AccountCircle,
                                 contentDescription = "Perfil",
-                                modifier = Modifier.size(70.dp)
-                                    .padding(end = 20.dp),
+                                modifier = Modifier.size(70.dp).padding(end = 20.dp),
                                 tint = Color.Black
                             )
                         }
@@ -140,7 +145,7 @@ fun ReminderScreen(
                 containerColor = bar,
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                IconButton(onClick = { /* Acción de volver */ }) {
+                IconButton(onClick = { /* Acción volver */ }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
@@ -148,26 +153,22 @@ fun ReminderScreen(
                     )
                 }
             }
-        }, floatingActionButton = {
+        },
+        floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Acción añadir */ },
+                onClick = { navegateToNewReminder() },
                 containerColor = floating_button_reminder
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Añadir", tint = Color.Black)
             }
         }
     ) { innerPadding ->
-        var searchText by remember { mutableStateOf("") }
-
         Column(modifier = Modifier.padding(16.dp)) {
-            // Campo de búsqueda
             OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
+                value = searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
                 placeholder = { Text("Buscar Recordatorio") },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = "Buscar")
-                },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White, shape = RoundedCornerShape(10.dp))
@@ -175,29 +176,34 @@ fun ReminderScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lista de recordatorios filtrada
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(recordatorios.filter {
-                    it.titulo?.contains(searchText, ignoreCase = true) == true
-                }) { recordatorio ->
-                    ReminderCard(recordatorio)
+                items(recordatorios) { recordatorio ->
+                    ReminderCard(
+                        recordatorio = recordatorio,
+                        onClick = { recordatorio.id?.let { navegateToSelectedReminder(it) } },
+                        onFavoritoClick = { viewModel.actualizarFavorito(recordatorio) }
+                    )
                 }
             }
         }
     }
 }
 
-
 @Composable
-fun ReminderCard(recordatorio: Recordatorio) {
+fun ReminderCard(
+    recordatorio: Recordatorio,
+    onClick: () -> Unit,
+    onFavoritoClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFE0DEDE), RoundedCornerShape(8.dp))
             .padding(12.dp)
+            .clickable { onClick() }
     ) {
         Column {
             Row(
@@ -205,11 +211,13 @@ fun ReminderCard(recordatorio: Recordatorio) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Favorito",
-                        tint = Color.Black
-                    )
+                    IconButton(onClick = { onFavoritoClick() }) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Favorito",
+                            tint = if (recordatorio.esFavorito == true) Color.Yellow else Color.Black
+                        )
+                    }
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = recordatorio.titulo ?: "Sin título",
@@ -250,29 +258,16 @@ fun ReminderCard(recordatorio: Recordatorio) {
                 }
 
                 Row {
-                    // Mostrar autor si está compartido por otro
-                    recordatorio.compartidoPor?.let {
+                    recordatorio.compartidoPor?.takeIf { it.isNotBlank() }?.let {
                         Text(
                             text = "Compartido por $it",
                             fontSize = 12.sp,
                             color = Color.DarkGray
                         )
                     }
-
-                    // Mostrar ícono de edición si no está compartido o si es el creador
-                    if (recordatorio.esta_Compartido != true) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            tint = Color.Black,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
                 }
             }
 
-            // Indicador de color de categoría (esquina superior derecha)
             Box(
                 modifier = Modifier
                     .align(Alignment.End)
@@ -283,3 +278,4 @@ fun ReminderCard(recordatorio: Recordatorio) {
         }
     }
 }
+

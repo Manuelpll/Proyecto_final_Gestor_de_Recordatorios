@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_home
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.AccountCircle
@@ -35,6 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.hilt.navigation.compose.hiltViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,17 +48,14 @@ fun HomeScreen(
     navegateToReminder: () -> Unit,
     navegateToFriends: () -> Unit,
     navegateToCategory: () -> Unit,
-    navegateToSelectedReminder: () -> Unit,
-    navegateToProfile: () -> Unit
+    navegateToSelectedReminder: (String) -> Unit,
+    navegateToProfile: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val recordatorioLists = listOf(
-        Recordatorio("Charla formación", "Trabajo", "4/04", Color(0xFFF1C4BC), Color.Red),
-        Recordatorio("Charla formación", "Salud", "4/04", Color(0xFF4CAF50), Color.Yellow),
-        Recordatorio("Charla formación", "Educación", "4/04", Color(0xFFB2EBF2), Color.Cyan),
-        Recordatorio("Charla formación", "Reunión", "4/04", Color(0xFF9575CD), Color.Magenta),
-        Recordatorio("Charla formación", "Evento", "4/04", Color(0xFFFFEB3B), Color.Green)
-    )
-    var expanded by remember { mutableStateOf(false)}
+    val recordatorios by remember { derivedStateOf { viewModel.recordatorios } }
+    val profileImageUrl by viewModel.profileImageUrl
+
+    var expanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -75,15 +77,24 @@ fun HomeScreen(
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Mis Recordatorios") },
-                                    onClick = { expanded = false /* Acción */ }
+                                    onClick = {
+                                        expanded = false
+                                        navegateToReminder()
+                                    }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Amigos") },
-                                    onClick = { expanded = false /* Acción */ }
+                                    onClick = {
+                                        expanded = false
+                                        navegateToFriends()
+                                    }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Categorías Creadas") },
-                                    onClick = { expanded = false /* Acción */ }
+                                    onClick = {
+                                        expanded = false
+                                        navegateToCategory()
+                                    }
                                 )
                             }
                         }
@@ -95,14 +106,31 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.Center
                         )
-                        IconButton(onClick = { navegateToProfile()}, modifier = Modifier.size(70.dp)){
-                        Icon(
-                            Icons.Default.AccountCircle,
-                            contentDescription = "Perfil",
-                            modifier = Modifier.size(70.dp)
-                                .padding(end= 20.dp),
-                            tint = Color.Black
-                        )
+                        IconButton(
+                            onClick = { navegateToProfile() },
+                            modifier = Modifier
+                                .size(70.dp)
+                        ) {
+                            if (profileImageUrl != null) {
+                                AsyncImage(
+                                    model = profileImageUrl,
+                                    contentDescription = "Perfil",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(50.dp)
+                                        .clip(CircleShape)
+                                        .border(2.dp, Color.Black, CircleShape)
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.AccountCircle,
+                                    contentDescription = "Perfil",
+                                    modifier = Modifier
+                                        .size(70.dp)
+                                        .padding(end = 20.dp),
+                                    tint = Color.Black
+                                )
+                            }
                         }
                     }
                 },
@@ -118,8 +146,8 @@ fun HomeScreen(
                 .background(background_home)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(recordatorioLists) { reminder2 ->
-                ReminderCard(reminder2)
+            items(recordatorios) { reminder ->
+                ReminderCard(reminder) { reminder.id?.let { navegateToSelectedReminder(it) } }
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
@@ -127,7 +155,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun ReminderCard(recordatorio: Recordatorio) {
+fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -139,7 +167,8 @@ fun ReminderCard(recordatorio: Recordatorio) {
                 containerColor = recordatorio.color
             ),
             shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(4.dp)
+            elevation = CardDefaults.cardElevation(4.dp),
+            onClick = {navegateToSelectedReminder()}
         ) {
             Row(
                 modifier = Modifier

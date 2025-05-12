@@ -13,13 +13,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_register_login_profile
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_profile_cerrar_sesion
@@ -27,11 +33,21 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_profile_cer
 @Composable
 fun ProfileScreen(
     navigateToInitial: () -> Unit,
-    viewModel: ProfileViewModel
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val userName by viewModel.userName.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
     val userId by viewModel.userId.collectAsState()
+    val profileImageUrl by viewModel.profileImageUrl.collectAsState()
     val logoutSuccess by viewModel.logoutSuccess.collectAsState()
+
+    // Campos para edición
+    var showEditDialog by remember { mutableStateOf(false) }
+    var newTelefono by remember { mutableStateOf("") }
+    var newUbicacion by remember { mutableStateOf("") }
+    var newCorreo by remember { mutableStateOf(userEmail) }
+    var showError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(logoutSuccess) {
         if (logoutSuccess) {
@@ -62,23 +78,35 @@ fun ProfileScreen(
                 .background(background_register_login_profile),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(120.dp))
+            Spacer(modifier = Modifier.height(100.dp))
 
-            Icon(
-                Icons.Default.AccountCircle,
-                contentDescription = "Foto de perfil",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray)
-            )
+            // Imagen perfil
+            if (profileImageUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = profileImageUrl,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Default.AccountCircle,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Text("Usuario: $userName", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
-            Text("Usuario actual", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-
-            // ID personal (no editable)
+            // ID personal
             Text(
                 text = "Id personal: $userId",
                 fontSize = 14.sp,
@@ -90,6 +118,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Tarjeta con datos
             Card(
                 modifier = Modifier.fillMaxWidth(0.8f),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -101,9 +130,9 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Correo electrónico: $userEmail")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Teléfono: ")
+                    Text("Teléfono: $newTelefono")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Ubicación: ")
+                    Text("Ubicación: $newUbicacion")
                 }
 
                 // Icono de edición
@@ -113,7 +142,7 @@ fun ProfileScreen(
                         .padding(8.dp),
                     contentAlignment = Alignment.BottomEnd
                 ) {
-                    IconButton(onClick = { /* Abrir modo edición */ }) {
+                    IconButton(onClick = { showEditDialog = true }) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar datos",
@@ -138,7 +167,75 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.weight(1f))
-
         }
+    }
+
+    // Dialogo edición
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("Editar datos") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = newTelefono,
+                        onValueChange = { newTelefono = it },
+                        label = { Text("Nuevo teléfono") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newUbicacion,
+                        onValueChange = { newUbicacion = it },
+                        label = { Text("Nueva ubicación") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newCorreo,
+                        onValueChange = { newCorreo = it },
+                        label = { Text("Nuevo correo") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.editUserData(
+                        newTelefono,
+                        newUbicacion,
+                        newCorreo,
+                        onSuccess = {
+                            showEditDialog = false
+                        },
+                        onFailure = { error ->
+                            errorMessage = error
+                            showError = true
+                        }
+                    )
+                }) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Dialogo error
+    if (showError) {
+        AlertDialog(
+            onDismissRequest = { showError = false },
+            title = { Text("Error") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                Button(onClick = { showError = false }) {
+                    Text("Aceptar")
+                }
+            }
+        )
     }
 }

@@ -24,7 +24,7 @@ object ReminderScreen
 object NewReminderScreen
 
 @Serializable
-object SelectedReminderScreen
+data class SelectedReminderScreen(val id_recordatorio:String)
 
 @Serializable
 object CategoryScreen
