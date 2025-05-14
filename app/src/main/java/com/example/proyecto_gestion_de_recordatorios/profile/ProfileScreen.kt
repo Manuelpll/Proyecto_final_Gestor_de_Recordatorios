@@ -33,7 +33,8 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_profile_cer
 @Composable
 fun ProfileScreen(
     navigateToInitial: () -> Unit,
-    viewModel: ProfileViewModel = hiltViewModel()
+    viewModel: ProfileViewModel = hiltViewModel(),
+    navigateToBack: () -> Boolean
 ) {
     val userName by viewModel.userName.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
@@ -61,7 +62,7 @@ fun ProfileScreen(
                 containerColor = bar,
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                IconButton(onClick = { }) {
+                IconButton(onClick = { navigateToBack() }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",

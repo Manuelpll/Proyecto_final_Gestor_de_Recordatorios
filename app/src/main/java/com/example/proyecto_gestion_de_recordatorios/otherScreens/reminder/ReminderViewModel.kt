@@ -46,15 +46,10 @@ class ReminderViewModel @Inject constructor(
     fun cargarRecordatorios() {
         val userId = auth.currentUser?.uid
         if (userId != null) {
-            firestore.collection("usuarios").document(userId)
+            firestore.collection("Users").document(userId)
                 .get()
                 .addOnSuccessListener { userSnapshot ->
-                    val misIds =
-                        userSnapshot.get("recordatorios_ids") as? List<String> ?: emptyList()
-                    val compartidosIds =
-                        userSnapshot.get("compartidos_ids") as? List<String> ?: emptyList()
-                    val todosIds = misIds + compartidosIds
-
+                    val todosIds =  userSnapshot.get("recordatorios_disponibles") as? List<String> ?: emptyList()
                     if (todosIds.isNotEmpty()) {
                         firestore.collectionGroup("recordatorios")
                             .whereIn(FieldPath.documentId(), todosIds)

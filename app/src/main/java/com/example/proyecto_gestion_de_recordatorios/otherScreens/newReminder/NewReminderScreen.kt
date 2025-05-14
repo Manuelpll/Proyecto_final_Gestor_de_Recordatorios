@@ -1,6 +1,9 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.newReminder
 
+import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -14,6 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_newreminder
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_cancel
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.default_button_color
@@ -21,24 +26,19 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.newreminder_select
 
 
 @Composable
-fun NewReminderScreen(navegateToReminder: () -> Unit) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var time by remember { mutableStateOf("") }
-    var colorIndex by remember { mutableStateOf(0f) }
-    var priority by remember { mutableStateOf(0f) }
-    var isEditable by remember { mutableStateOf(false) }
+fun NewReminderScreen(navegateToReminder: () -> Unit, viewModel: NewReminderViewModel = hiltViewModel()) {
 
-    val colorOptions = listOf(
-        Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Magenta,
-        Color.Cyan, Color.Gray, Color.Black, Color(0xFF65558F), Color(0xFFF39AFF)
-    )
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    val priorityLevels = listOf("Baja", "Media", "Alta")
+    var expanded by remember { mutableStateOf(false) }
 
-    Scaffold(
-        containerColor = background_newreminder
-    ) { innerPadding ->
+    // Cargar categorías al entrar
+    LaunchedEffect(Unit) {
+        viewModel.cargarCategorias()
+    }
+
+    Scaffold(containerColor = background_newreminder) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -47,65 +47,56 @@ fun NewReminderScreen(navegateToReminder: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Nuevo  Recordatorio",
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                textDecoration = TextDecoration.Underline
-            )
+            Text("Nuevo Recordatorio", fontWeight = FontWeight.Bold, fontSize = 22.sp, textDecoration = TextDecoration.Underline)
 
             OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
+                value = viewModel.titulo,
+                onValueChange = { viewModel.titulo = it },
                 label = { Text("Título") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
             OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
+                value = viewModel.descripcion,
+                onValueChange = { viewModel.descripcion = it },
                 label = { Text("Descripción") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
             OutlinedTextField(
-                value = time,
-                onValueChange = { time = it },
+                value = viewModel.hora,
+                onValueChange = { viewModel.hora = it },
                 label = { Text("Hora de recuerdo") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Color", fontWeight = FontWeight.SemiBold)
+
+            // Selector de color
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text("Color", fontWeight = FontWeight.SemiBold)
                 Slider(
-                    value = colorIndex,
-                    onValueChange = { colorIndex = it },
-                    valueRange = 0f..(colorOptions.lastIndex).toFloat(),
-                    steps = colorOptions.size - 2,
+                    value = viewModel.colorIndex,
+                    onValueChange = { viewModel.colorIndex = it },
+                    valueRange = 0f..(viewModel.colores.lastIndex).toFloat(),
+                    steps = viewModel.colores.size - 2,
                     colors = SliderDefaults.colors(
-                        thumbColor = colorOptions[colorIndex.toInt()],
-                        activeTrackColor = colorOptions[colorIndex.toInt()]
+                        thumbColor = viewModel.colores[viewModel.colorIndex.toInt()],
+                        activeTrackColor = viewModel.colores[viewModel.colorIndex.toInt()]
                     ),
                     modifier = Modifier
                         .size(220.dp, 90.dp)
                         .padding(start = 40.dp)
                 )
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Prioridad", fontWeight = FontWeight.SemiBold)
+
+            // Selector de prioridad
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text("Prioridad", fontWeight = FontWeight.SemiBold)
                 Slider(
-                    value = priority,
-                    onValueChange = { priority = it },
+                    value = viewModel.prioridadIndex,
+                    onValueChange = { viewModel.prioridadIndex = it },
                     valueRange = 0f..2f,
                     steps = 1,
                     colors = SliderDefaults.colors(
@@ -117,30 +108,60 @@ fun NewReminderScreen(navegateToReminder: () -> Unit) {
                         .padding(start = 40.dp)
                 )
             }
+
+            // Dropdown de categorías
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
-            ){
-            Text(text = "Asignar Categoría", fontWeight = FontWeight.SemiBold)
-            Button(
-                onClick = { /* abrir selección de categorías */ },
-                colors = ButtonDefaults.buttonColors(containerColor = newreminder_select_category),
-                shape = RoundedCornerShape(20.dp)
             ) {
-                Text("Categorías existentes", color = Color.White)
+                Text("Asignar Categoría", fontWeight = FontWeight.SemiBold)
+                Box {
+                    Button(
+                        onClick = { expanded = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = newreminder_select_category),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text("Categorías existentes", color = Color.White)
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        viewModel.categoriasDisponibles.forEach { (nombre, color) ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .background(color, shape = CircleShape)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(nombre)
+                                    }
+                                },
+                                onClick = {
+                                    viewModel.categoriaSeleccionada = nombre
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
-            }
+
+            // Switch editable
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("¿Es editable por otros usuarios?")
                 Spacer(Modifier.width(40.dp))
                 Switch(
-                    checked = isEditable,
-                    onCheckedChange = { isEditable = it },
+                    checked = viewModel.esEditable,
+                    onCheckedChange = { viewModel.esEditable = it },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = default_button_color
@@ -148,19 +169,27 @@ fun NewReminderScreen(navegateToReminder: () -> Unit) {
                 )
             }
 
+            // Botones
             Row(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Button(
-                    onClick = {},
+                    onClick = {
+                        viewModel.guardarRecordatorio(
+                            onSuccess = { navegateToReminder() },
+                            onFailure = {
+                                Toast.makeText(context, "Error al guardar: ${it.message}", Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = default_button_color),
                     shape = RoundedCornerShape(50)
                 ) {
                     Text("Crear", color = Color.White)
                 }
                 Button(
-                    onClick = {  },
+                    onClick = { navegateToReminder() },
                     colors = ButtonDefaults.buttonColors(containerColor = button_cancel),
                     shape = RoundedCornerShape(50)
                 ) {

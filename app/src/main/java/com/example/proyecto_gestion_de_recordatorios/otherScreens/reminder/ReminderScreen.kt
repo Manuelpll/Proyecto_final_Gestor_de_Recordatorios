@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -73,7 +72,8 @@ fun ReminderScreen(
     navegateToSelectedReminder: (String) -> Unit,
     navegateToProfile: () -> Unit,
     navegateToCategory: () -> Unit,
-    navegateToFriend: () -> Unit
+    navegateToFriend: () -> Unit,
+    navegateToBack: () -> Boolean
 ) {
     var expanded by remember { mutableStateOf(false) }
     val recordatorios by remember { derivedStateOf {
@@ -145,7 +145,7 @@ fun ReminderScreen(
                 containerColor = bar,
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                IconButton(onClick = { /* Acción volver */ }) {
+                IconButton(onClick = { navegateToBack() }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",

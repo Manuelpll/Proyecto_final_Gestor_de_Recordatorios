@@ -28,10 +28,10 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login_newfr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview
 @Composable
 fun NewFriendScreen(
-    onAddFriend: (String) -> Unit = {}
+    onAddFriend: (String) -> Unit = {},
+    navegateToFriend: () -> Unit
 ) {
     var selectedFriend by remember { mutableStateOf<String?>(null) }
 

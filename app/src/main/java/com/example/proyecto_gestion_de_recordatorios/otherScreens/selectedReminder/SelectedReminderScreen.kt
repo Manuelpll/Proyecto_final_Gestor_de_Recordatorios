@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -26,7 +25,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -63,7 +61,8 @@ fun SelectedReminderScreen(
     navegateToFriend: () -> Unit,
     navegateToHome: () -> Unit,
     id_recordatorio: String,
-    viewModel: SelectedReminderViewModel = hiltViewModel()
+    viewModel: SelectedReminderViewModel = hiltViewModel(),
+    navegateToBack: () -> Boolean
 ) {
     val reminder by viewModel.selectedReminder.collectAsState()
     val profilePhotoUrl by viewModel.profilePhotoUrl.collectAsState()
@@ -150,7 +149,7 @@ fun SelectedReminderScreen(
         containerColor = background_rnrfc,
         bottomBar = {
             BottomAppBar(containerColor = bar, contentPadding = PaddingValues(horizontal = 16.dp)) {
-                IconButton(onClick = { navegateToHome() }) {
+                IconButton(onClick = { navegateToBack() }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",

@@ -10,6 +10,8 @@ import com.example.proyecto_gestion_de_recordatorios.initial.InitialScreen
 import com.example.proyecto_gestion_de_recordatorios.login.LoginScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.category.CategoryScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.friend.FriendScreen
+import com.example.proyecto_gestion_de_recordatorios.otherScreens.newCategory.NewCategoryScreen
+import com.example.proyecto_gestion_de_recordatorios.otherScreens.newFriend.NewFriendScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.newReminder.NewReminderScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder.ReminderScreen
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedReminder.SelectedReminderScreen
@@ -52,7 +54,8 @@ fun NavigationWrapper(navController: NavHostController) {
 
         composable<ProfileScreen> {
             ProfileScreen(
-                navigateToInitial = { navController.navigate(InitialScreen) }
+                navigateToInitial = { navController.navigate(InitialScreen) },
+                navigateToBack= {navController.navigateUp()}
             )
         }
 
@@ -62,7 +65,8 @@ fun NavigationWrapper(navController: NavHostController) {
                 navegateToSelectedReminder = { id-> navController.navigate(SelectedReminderScreen(id)) },
                 navegateToProfile = { navController.navigate(ProfileScreen) },
                 navegateToCategory = { navController.navigate(CategoryScreen) },
-                navegateToFriend = { navController.navigate(FriendScreen) }
+                navegateToFriend = { navController.navigate(FriendScreen) },
+                navegateToBack= {navController.navigateUp()}
             )
         }
 
@@ -73,7 +77,8 @@ fun NavigationWrapper(navController: NavHostController) {
                 navegateToProfile = { navController.navigate(ProfileScreen) },
                 navegateToCategory = { navController.navigate(CategoryScreen) },
                 navegateToFriend = { navController.navigate(FriendScreen) },
-                navegateToHome = { navController.navigate(HomeScreen) }
+                navegateToHome = { navController.navigate(HomeScreen) },
+                navegateToBack= {navController.navigateUp()}
             )
         }
 
@@ -87,7 +92,14 @@ fun NavigationWrapper(navController: NavHostController) {
             FriendScreen(
                 navegateToNewFriend = { navController.navigate(NewFriendScreen) },
                 navegateToProfile = { navController.navigate(ProfileScreen) },
-                navegateToReminder = { navController.navigate(ReminderScreen) }
+                navegateToReminder = { navController.navigate(ReminderScreen) },
+                navegateToBack= {navController.navigateUp()}
+            )
+        }
+
+        composable<NewFriendScreen>{
+            NewFriendScreen(
+                navegateToFriend={navController.navigate(FriendScreen)}
             )
         }
 
@@ -95,8 +107,14 @@ fun NavigationWrapper(navController: NavHostController) {
             CategoryScreen(
                 navegateToNewCategory = { navController.navigate(NewCategoryScreen) },
                 navegateToProfile = { navController.navigate(ProfileScreen) },
-                navegateToCategory = { navController.navigate(CategoryScreen) },
-                navegateToReminder = { navController.navigate(ReminderScreen) }
+                navegateToFriend = { navController.navigate(FriendScreen) },
+                navegateToReminder = { navController.navigate(ReminderScreen) },
+                navegateToBack= {navController.navigateUp()}
+            )
+        }
+        composable<NewCategoryScreen>{
+            NewCategoryScreen(
+                navigateToCategory= navController.navigate(CategoryScreen)
             )
         }
     }

@@ -42,7 +42,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
@@ -55,8 +54,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_ca
 fun CategoryScreen(
     navegateToNewCategory: () -> Unit,
     navegateToProfile: () -> Unit,
-    navegateToCategory: () -> Unit,
-    navegateToReminder: () -> Unit
+    navegateToReminder: () -> Unit,
+    navegateToBack: () -> Boolean,
+    navegateToFriend: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     Scaffold(

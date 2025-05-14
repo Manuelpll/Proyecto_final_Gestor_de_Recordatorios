@@ -70,7 +70,7 @@ class ProfileViewModel @Inject constructor(
         val user = auth.currentUser
         val uid = user?.uid ?: return
 
-        val userRef = firestore.collection("usuarios").document(uid)
+        val userRef = firestore.collection("Users").document(uid)
 
         // Primero actualizamos Firestore
         userRef.get().addOnSuccessListener { document ->
@@ -109,7 +109,6 @@ class ProfileViewModel @Inject constructor(
                 _profileImageUrl.value = uri.toString()
             }
             .addOnFailureListener {
-                // Si falla, puedes dejar un valor vacío o uno por defecto
                 _profileImageUrl.value = ""
             }
     }

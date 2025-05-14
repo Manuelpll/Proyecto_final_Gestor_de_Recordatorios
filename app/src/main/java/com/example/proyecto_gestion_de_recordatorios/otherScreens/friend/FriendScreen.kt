@@ -57,7 +57,8 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 fun FriendScreen(
     navegateToNewFriend: () -> Unit,
     navegateToProfile: () -> Unit,
-    navegateToReminder: () -> Unit
+    navegateToReminder: () -> Unit,
+    navegateToBack: () -> Boolean
 ) {
     var expanded by remember { mutableStateOf(false) }
     val friends = listOf("María López", "Carlos Pérez", "Laura Sánchez", "David Gómez")

@@ -11,6 +11,7 @@ data class Recordatorio(
     val color: Color,
     val color_de_la_categoria: Color? = null,
     var esFavorito:Boolean?= null,
+    val esEditable:Boolean?= null,
     val esta_Compartido: Boolean? = null,
     val lista_compartidos:List<String>? = null,
     val compartidoPor: String? = null,
