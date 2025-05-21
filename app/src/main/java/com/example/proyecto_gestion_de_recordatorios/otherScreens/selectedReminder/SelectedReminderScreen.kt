@@ -51,6 +51,7 @@ import coil.compose.AsyncImage
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import androidx.compose.runtime.collectAsState
+import com.example.proyecto_gestion_de_recordatorios.ui.theme.selectedreminder_compartir
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -64,7 +65,7 @@ fun SelectedReminderScreen(
     viewModel: SelectedReminderViewModel = hiltViewModel(),
     navegateToBack: () -> Boolean
 ) {
-    val reminder by viewModel.selectedReminder.collectAsState()
+    val recordatorio by viewModel.selectedReminder.collectAsState()
     val profilePhotoUrl by viewModel.profilePhotoUrl.collectAsState()
 
     // Cargar datos al entrar en la pantalla
@@ -72,7 +73,7 @@ fun SelectedReminderScreen(
         viewModel.loadReminderById(id_recordatorio)
         viewModel.loadProfilePhoto()
     }
-
+    val categoriaColor = recordatorio?.color_de_la_categoria?.toColorOrDefault() ?: Color.Gray
     var expanded by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -165,11 +166,12 @@ fun SelectedReminderScreen(
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
-            reminder?.let { recordatorio->
+            recordatorio?.let { reminder->
+                val colorReminder= reminder.color.toColorOrDefault() ?: Color.LightGray
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(recordatorio.color ?: Color.LightGray)
+                        .background(colorReminder)
                         .padding(20.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -177,13 +179,13 @@ fun SelectedReminderScreen(
                             modifier = Modifier
                                 .align(Alignment.End)
                                 .size(20.dp)
-                                .background(recordatorio.color_de_la_categoria ?: Color.Gray)
+                                .background(color = categoriaColor)
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = recordatorio.titulo ?: "Sin título",
+                            text = reminder.titulo ?: "Sin título",
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp
                         )
@@ -191,7 +193,7 @@ fun SelectedReminderScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = recordatorio.descripcion ?: "Sin descripción",
+                            text = reminder.descripcion ?: "Sin descripción",
                             color = Color.Red,
                             fontSize = 16.sp,
                             textAlign = TextAlign.Center
@@ -204,7 +206,7 @@ fun SelectedReminderScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Fecha en la que está:", fontWeight = FontWeight.SemiBold)
-                            Text(recordatorio.fecha ?: "Sin fecha")
+                            Text(reminder.fecha ?: "Sin fecha")
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -215,7 +217,7 @@ fun SelectedReminderScreen(
                         ) {
                             Text("Prioridad:", fontWeight = FontWeight.SemiBold)
                             Text(
-                                "~${recordatorio.prioridad}"
+                                "~${reminder.prioridad}"
                             )
                         }
 
@@ -223,28 +225,29 @@ fun SelectedReminderScreen(
 
                         Button(
                             onClick = { /* Acción compartir */ },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8671BF)),
+                            colors = ButtonDefaults.buttonColors(containerColor = selectedreminder_compartir),
                             shape = RoundedCornerShape(30.dp)
                         ) {
                             Text("Compartir", color = Color.White)
                         }
 
-                        if (recordatorio.esta_Compartido == true) {
+                        if (reminder.esta_Compartido == false) {
                             Spacer(modifier = Modifier.height(15.dp))
                             Text(
                                 "No tienes permiso para editarlo",
                                 fontSize = 12.sp,
                                 color = Color.DarkGray
                             )
-                        }
+                        } else {
 
-                        recordatorio.compartidoPor?.let {
-                            Spacer(modifier = Modifier.height(5.dp))
-                            Text(
-                                text = "Compartido por $it",
-                                fontSize = 12.sp,
-                                color = Color.DarkGray
-                            )
+                            reminder.compartidoPor?.let {
+                                Spacer(modifier = Modifier.height(5.dp))
+                                Text(
+                                    text = "Compartido por $it",
+                                    fontSize = 12.sp,
+                                    color = Color.DarkGray
+                                )
+                            }
                         }
                     }
                 }
@@ -254,3 +257,10 @@ fun SelectedReminderScreen(
         }
     }
     }
+fun String.toColorOrDefault(default: Color = Color.Gray): Color {
+    return try {
+        Color(android.graphics.Color.parseColor(this))
+    } catch (e: IllegalArgumentException) {
+        default
+    }
+}

@@ -46,7 +46,7 @@ class SelectedReminderViewModel @Inject constructor(
     fun loadProfilePhoto() {
         viewModelScope.launch {
             try {
-                val storageRef = storage.reference.child("profile_photos/${auth.currentUser?.uid}.jpg")
+                val storageRef = storage.reference.child("profile_images/${auth.currentUser?.uid}.jpg")
                 val url = storageRef.downloadUrl.await()
                 _profilePhotoUrl.value = url.toString()
             } catch (e: Exception) {

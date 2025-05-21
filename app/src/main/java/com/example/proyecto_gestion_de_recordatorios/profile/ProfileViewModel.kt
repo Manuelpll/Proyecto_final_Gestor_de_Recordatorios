@@ -1,7 +1,9 @@
 package com.example.proyecto_gestion_de_recordatorios.profile
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,11 +22,17 @@ class ProfileViewModel @Inject constructor(
     private val _userName = MutableStateFlow("")
     val userName = _userName.asStateFlow()
 
+    private val _userPhone = MutableStateFlow("")
+    val userPhone = _userPhone.asStateFlow()
+
     private val _userEmail = MutableStateFlow(auth.currentUser?.email ?: "")
     val userEmail = _userEmail.asStateFlow()
 
     private val _userId = MutableStateFlow(auth.currentUser?.uid ?: "")
     val userId = _userId.asStateFlow()
+
+    private val _userUbication = MutableStateFlow("")
+    val userUbication = _userUbication.asStateFlow()
 
     private val _profileImageUrl = MutableStateFlow("")
     val profileImageUrl = _profileImageUrl.asStateFlow()
@@ -46,24 +54,25 @@ class ProfileViewModel @Inject constructor(
     private fun loadUserData() {
         val uid = auth.currentUser?.uid ?: return
 
-        firestore.collection("usuarios").document(uid).get()
+        firestore.collection("Users").document(uid).get()
             .addOnSuccessListener { document ->
                 if (document != null) {
                     _userName.value = document.getString("nombre") ?: ""
-                    _userEmail.value = document.getString("correo") ?: auth.currentUser?.email.orEmpty()
+                    _userEmail.value = document.getString("email") ?: auth.currentUser?.email.orEmpty()
                     _userId.value = uid
+                    _userUbication.value=document.getString("ubicacion") ?:""
+                    _userPhone.value=document.getString("telefono") ?:""
                 }
             }
             .addOnFailureListener {
-                // Puedes agregar logs o control de errores si quieres
+                Log.e("Error de carga","No se ha podido cargar la información")
             }
     }
 
-    // Método para editar datos (telefono, ubicación, correo)
+    // Método para editar datos (telefono, ubicación)
     fun editUserData(
         newTelefono: String,
         newUbicacion: String,
-        newCorreo: String,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -77,19 +86,9 @@ class ProfileViewModel @Inject constructor(
             val updates = mutableMapOf<String, Any>()
             updates["telefono"] = newTelefono
             updates["ubicacion"] = newUbicacion
-            updates["correo"] = newCorreo
 
             userRef.update(updates)
                 .addOnSuccessListener {
-                    // Ahora actualizamos el correo en Auth
-                    user.updateEmail(newCorreo)
-                        .addOnSuccessListener {
-                            _userEmail.value = newCorreo
-                            onSuccess()
-                        }
-                        .addOnFailureListener { authError ->
-                            onFailure("Error al actualizar correo en autenticación: ${authError.message}")
-                        }
                 }
                 .addOnFailureListener { firestoreError ->
                     onFailure("Error al actualizar datos en Firestore: ${firestoreError.message}")

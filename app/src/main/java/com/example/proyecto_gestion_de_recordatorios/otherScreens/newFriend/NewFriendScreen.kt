@@ -1,11 +1,13 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.newFriend
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,45 +17,35 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.proyecto_gestion_de_recordatorios.data.Usuario
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_newfriend
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login_newfriend
-
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun NewFriendScreen(
-    onAddFriend: (String) -> Unit = {},
-    navegateToFriend: () -> Unit
+    viewModel: NewFriendViewModel = hiltViewModel(),
+    navegateToFriend: () -> Unit,
+    navegateToBack: () -> Boolean
 ) {
-    var selectedFriend by remember { mutableStateOf<String?>(null) }
-
-    val friendsList = listOf(
-        Usuario(nombre = "Javier", email = "javier@example.com"),
-        Usuario(nombre = "Mar", email = "mar@example.com"),
-        Usuario(nombre = "Kevin", email = "kevin@example.com"),
-        Usuario(nombre = "Mireya", email = "mireya@example.com")
-    )
+    val context = LocalContext.current
 
     Scaffold(
         bottomBar = {
-            BottomAppBar(
-                containerColor = bar,
-                contentPadding = PaddingValues(horizontal = 16.dp)
-            ) {
-                IconButton(onClick = { /* Acción volver */ }) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = Color.Black
-                    )
+            BottomAppBar(containerColor = bar) {
+                IconButton(onClick = { navegateToBack() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.Black)
                 }
             }
         },
@@ -77,16 +69,16 @@ fun NewFriendScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
+                value = viewModel.busqueda,
+                onValueChange = {
+                    viewModel.busqueda = it
+                    viewModel.buscarUsuariosPorNombre()
+                },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 placeholder = { Text("Buscar amigo") },
                 singleLine = true,
-                enabled = false,
                 modifier = Modifier.fillMaxWidth(0.9f),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    containerColor = Color.White
-                )
+                colors = TextFieldDefaults.outlinedTextFieldColors(containerColor = Color.White)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -95,10 +87,11 @@ fun NewFriendScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                items(friendsList) { friend ->
-                    Amigo(
-                        friend = friend,
-                        onSelect = { selectedFriend = it }
+                items(viewModel.listaUsuarios) { usuario ->
+                    AmigoItem(
+                        usuario = usuario,
+                        seleccionado = viewModel.usuarioSeleccionado?.uid == usuario.uid,
+                        onSelect = { viewModel.seleccionarUsuario(usuario) }
                     )
                 }
             }
@@ -106,43 +99,64 @@ fun NewFriendScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { selectedFriend?.let { onAddFriend(it) }  },
+                onClick = {
+                    viewModel.añadirContacto(
+                        onSuccess = {
+                            Toast.makeText(context, "Contacto añadido correctamente", Toast.LENGTH_SHORT).show()
+                            navegateToFriend()
+                        },
+                        onFailure = {
+                            Toast.makeText(context, "Error: $it", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                },
+                enabled = viewModel.usuarioSeleccionado != null,
+                shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                containerColor = button_login_newfriend,
-                    disabledContainerColor = button_login_newfriend.copy(alpha = 0.5f)),
-                enabled = selectedFriend != null,
-                shape = RoundedCornerShape(50)
+                    containerColor = button_login_newfriend,
+                    disabledContainerColor = button_login_newfriend.copy(alpha = 0.5f)
+                )
             ) {
                 Text("Añadir", color = Color.White)
             }
         }
     }
 }
-
 @Composable
-private fun Amigo(
-    friend: Usuario,
-    onSelect: (String) -> Unit
+fun AmigoItem(
+    usuario: Usuario,
+    seleccionado: Boolean,
+    onSelect: () -> Unit
 ) {
+    val background = if (seleccionado) background_newfriend else Color(0xFFE0DEDE)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .background(Color(0xFFE0DEDE), shape = RoundedCornerShape(8.dp))
-            .clickable { onSelect(friend.nombre) }
+            .fillMaxWidth(0.9f)
+            .background(background, shape = RoundedCornerShape(8.dp))
+            .clickable { onSelect() }
             .padding(12.dp)
     ) {
-        Icon(
-            Icons.Default.AccountCircle,
-            contentDescription = null,
-            tint = Color.Black,
-            modifier = Modifier.size(32.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = friend.nombre,
-            fontSize = 18.sp,
-            color = Color.Black
-        )
+        if(usuario.foto_perfil!=null) {
+            AsyncImage(
+                model = usuario.foto_perfil,
+                contentDescription = "Foto de perfil",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop,
+            )
+        }else{
+            Icon(
+                Icons.Default.AccountCircle,
+                contentDescription = "Foto de perfil",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(usuario.nombre, fontSize = 18.sp, color = Color.Black)
     }
 }

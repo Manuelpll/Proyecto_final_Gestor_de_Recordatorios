@@ -1,6 +1,7 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -57,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
@@ -73,16 +76,20 @@ fun ReminderScreen(
     navegateToProfile: () -> Unit,
     navegateToCategory: () -> Unit,
     navegateToFriend: () -> Unit,
-    navegateToBack: () -> Boolean
+    navegateToBack: () -> Boolean,
+    navegateToHome: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val recordatorios by remember { derivedStateOf {
         viewModel.recordatorios.filter { it.titulo?.contains(viewModel.searchQuery.value, ignoreCase = true) == true }
     }}
     val searchQuery by viewModel.searchQuery
+    val fotoPerfilUrl = viewModel.fotoPerfilUrl
 
     LaunchedEffect(Unit) {
         viewModel.cargarRecordatorios()
+        viewModel.cargarImagenPerfil()
+        Log.d("FirestoreDebug","Datos: $recordatorios")
     }
 
     Scaffold(
@@ -107,7 +114,8 @@ fun ReminderScreen(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
-                                DropdownMenuItem(text = { Text("Home") }, onClick = { expanded = false })
+                                DropdownMenuItem(text = { Text("Home") }, onClick = { expanded = false
+                                navegateToHome()})
                                 DropdownMenuItem(text = { Text("Amigos") }, onClick = {
                                     expanded = false
                                     navegateToFriend()
@@ -127,12 +135,22 @@ fun ReminderScreen(
                             textAlign = TextAlign.Center
                         )
                         IconButton(onClick = { navegateToProfile() }, modifier = Modifier.size(70.dp)) {
-                            Icon(
-                                Icons.Default.AccountCircle,
-                                contentDescription = "Perfil",
-                                modifier = Modifier.size(70.dp).padding(end = 20.dp),
-                                tint = Color.Black
-                            )
+                            if (fotoPerfilUrl != null) {
+                                AsyncImage(
+                                    model = fotoPerfilUrl,
+                                    contentDescription = "Foto de perfil",
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.AccountCircle,
+                                    contentDescription = "Perfil",
+                                    modifier = Modifier.size(70.dp).padding(end = 20.dp),
+                                    tint = Color.Black
+                                )
+                            }
                         }
                     }
                 },
@@ -163,7 +181,8 @@ fun ReminderScreen(
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier   .padding(innerPadding)
+            .padding(16.dp)) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { viewModel.onSearchQueryChange(it) },
@@ -198,12 +217,26 @@ fun ReminderCard(
     onClick: () -> Unit,
     onFavoritoClick: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
+
+        val colorRecordatorio = try {
+            Color(android.graphics.Color.parseColor("#${recordatorio.color}"))
+        } catch (e: Exception) {
+            null
+        }
+        val colorCategoria = try {
+            Color(android.graphics.Color.parseColor("#${recordatorio.color_de_la_categoria}"))
+        } catch (e: Exception) {
+            null
+        }
+    colorRecordatorio?.let {
+        Modifier
             .fillMaxWidth()
-            .background(Color(0xFFE0DEDE), RoundedCornerShape(8.dp))
+            .background( color = it, RoundedCornerShape(8.dp))
             .padding(12.dp)
             .clickable { onClick() }
+    }?.let {
+        Box(
+        modifier = it
     ) {
         Column {
             Row(
@@ -236,7 +269,7 @@ fun ReminderCard(
 
             Text(
                 text = recordatorio.descripcion ?: "",
-                color = Color.Red,
+                color = Color.Black,
                 fontSize = 14.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -268,14 +301,18 @@ fun ReminderCard(
                 }
             }
 
-            Box(
-                modifier = Modifier
+            colorCategoria?.let { it1 ->
+                Modifier
                     .align(Alignment.End)
                     .offset(y = (-48).dp, x = 4.dp)
                     .size(16.dp)
-                    .background(recordatorio.color_de_la_categoria ?: Color.Gray, shape = CircleShape)
-            )
+                    .background( color = it1, shape = CircleShape)
+            }?.let { it2 ->
+                Box(
+                    modifier = it2
+                )
+            }
         }
     }
-}
-
+    }
+        }

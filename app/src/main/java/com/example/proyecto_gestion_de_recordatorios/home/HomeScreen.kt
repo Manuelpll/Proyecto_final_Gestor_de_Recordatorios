@@ -156,6 +156,8 @@ fun HomeScreen(
 
 @Composable
 fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Unit) {
+    val categoriaColor = recordatorio.color_de_la_categoria?.toColorOrDefault() ?: Color.Gray
+    val reminderColor = recordatorio.color.toColorOrDefault() ?: Color.Gray
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -163,8 +165,7 @@ fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Un
     ) {
         Card(
             modifier = Modifier.fillMaxSize(),
-            colors = CardDefaults.cardColors(
-                containerColor = recordatorio.color
+            colors = CardDefaults.cardColors( containerColor =  reminderColor
             ),
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(4.dp),
@@ -198,7 +199,14 @@ fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Un
                 .align(Alignment.TopEnd)
                 .padding(4.dp)
                 .size(12.dp)
-                .background(recordatorio.color_de_la_categoria!!, shape = RectangleShape)
+                .background(color= categoriaColor, shape = RectangleShape)
         )
+    }
+}
+fun String.toColorOrDefault(default: Color = Color.Gray): Color {
+    return try {
+        Color(android.graphics.Color.parseColor(this))
+    } catch (e: IllegalArgumentException) {
+        default
     }
 }

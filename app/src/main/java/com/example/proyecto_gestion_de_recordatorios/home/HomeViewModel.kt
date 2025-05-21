@@ -34,7 +34,6 @@ class HomeViewModel @Inject constructor(
         val userPath = "/Users/$userId"
 
         firestore.collectionGroup("Reminders")
-            .whereArrayContainsAny("compartido_con", listOf(userPath, ""))
             .get()
             .addOnSuccessListener { querySnapshot ->
                 val recordatoriosList = querySnapshot.documents.mapNotNull { doc ->
@@ -53,12 +52,12 @@ class HomeViewModel @Inject constructor(
                         val compartidoPor = doc.getString("creador") ?: ""
 
                         Recordatorio(
-                            id=id,
+                            id =id,
                             titulo = titulo,
                             fecha = fecha,
                             descripcion = descripcion,
-                            color = color,
-                            color_de_la_categoria = colorCategoria,
+                            color = color.toString(),
+                            color_de_la_categoria = colorCategoria.toString(),
                             esFavorito = esFavorito,
                             esta_Compartido = estaCompartido,
                             lista_compartidos = listaCompartidos,
@@ -75,7 +74,7 @@ class HomeViewModel @Inject constructor(
 
     private fun obtenerFotoPerfil() {
         val userId = auth.currentUser?.uid ?: return
-        val storageRef = storage.reference.child("images/$userId")
+        val storageRef = storage.reference.child("profile_images/$userId.jpg")
 
         storageRef.downloadUrl
             .addOnSuccessListener { uri ->

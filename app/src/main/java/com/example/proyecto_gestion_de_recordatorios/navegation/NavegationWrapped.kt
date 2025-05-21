@@ -66,7 +66,8 @@ fun NavigationWrapper(navController: NavHostController) {
                 navegateToProfile = { navController.navigate(ProfileScreen) },
                 navegateToCategory = { navController.navigate(CategoryScreen) },
                 navegateToFriend = { navController.navigate(FriendScreen) },
-                navegateToBack= {navController.navigateUp()}
+                navegateToBack= {navController.navigateUp()},
+                navegateToHome= {navController.navigate(HomeScreen)}
             )
         }
 
@@ -93,13 +94,16 @@ fun NavigationWrapper(navController: NavHostController) {
                 navegateToNewFriend = { navController.navigate(NewFriendScreen) },
                 navegateToProfile = { navController.navigate(ProfileScreen) },
                 navegateToReminder = { navController.navigate(ReminderScreen) },
-                navegateToBack= {navController.navigateUp()}
+                navegateToBack= {navController.navigateUp()},
+                navegateToHome= {navController.navigate(HomeScreen)},
+                navegateToCategory= {navController.navigate(CategoryScreen)}
             )
         }
 
         composable<NewFriendScreen>{
             NewFriendScreen(
-                navegateToFriend={navController.navigate(FriendScreen)}
+                navegateToFriend={navController.navigate(FriendScreen)},
+                navegateToBack= {navController.navigateUp()}
             )
         }
 
@@ -109,12 +113,14 @@ fun NavigationWrapper(navController: NavHostController) {
                 navegateToProfile = { navController.navigate(ProfileScreen) },
                 navegateToFriend = { navController.navigate(FriendScreen) },
                 navegateToReminder = { navController.navigate(ReminderScreen) },
-                navegateToBack= {navController.navigateUp()}
+                navegateToBack= {navController.navigateUp()},
+                navegateToHome= {navController.navigate(HomeScreen)}
             )
         }
         composable<NewCategoryScreen>{
             NewCategoryScreen(
-                navigateToCategory= navController.navigate(CategoryScreen)
+                navigateToBack = {navController.navigateUp()},
+                navegateToCategory= {navController.navigate(CategoryScreen)}
             )
         }
     }

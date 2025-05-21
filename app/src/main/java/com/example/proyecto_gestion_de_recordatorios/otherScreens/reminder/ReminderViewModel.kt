@@ -25,33 +25,33 @@ class ReminderViewModel @Inject constructor(
     private val _searchQuery = mutableStateOf("")
     val searchQuery: State<String> get() = _searchQuery
 
-    private val _profileImageUrl = mutableStateOf<String?>(null)
-    val profileImageUrl: State<String?> get() = _profileImageUrl
+    private val _fotoPerfilUrl= mutableStateOf<String?>(null)
+    val fotoPerfilUrl: State<String?> get() = _fotoPerfilUrl
 
     init {
         cargarRecordatorios()
         cargarImagenPerfil()
     }
 
-    private fun cargarImagenPerfil() {
+    fun cargarImagenPerfil() {
         val userId = auth.currentUser?.uid
         if (userId != null) {
             val ref = storage.reference.child("profile_images/$userId.jpg")
             ref.downloadUrl.addOnSuccessListener { uri ->
-                _profileImageUrl.value = uri.toString()
+                _fotoPerfilUrl.value = uri.toString()
             }
         }
     }
 
     fun cargarRecordatorios() {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
-            firestore.collection("Users").document(userId)
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            firestore.collection("Users").document(uid)
                 .get()
                 .addOnSuccessListener { userSnapshot ->
                     val todosIds =  userSnapshot.get("recordatorios_disponibles") as? List<String> ?: emptyList()
                     if (todosIds.isNotEmpty()) {
-                        firestore.collectionGroup("recordatorios")
+                        firestore.collectionGroup("Reminders")
                             .whereIn(FieldPath.documentId(), todosIds)
                             .get()
                             .addOnSuccessListener { snapshot ->
@@ -59,31 +59,28 @@ class ReminderViewModel @Inject constructor(
                                     val titulo = doc.getString("titulo")
                                     val fecha = doc.getString("fecha_hora")
                                     val descripcion = doc.getString("descripcion")
-                                    val colorHex = doc.getString("color") ?: "#FFFFFF"
-                                    val color = Color(android.graphics.Color.parseColor(colorHex))
-                                    val colorCategoriaHex =
-                                        doc.getString("color_categoria") ?: "#FFFFFF"
-                                    val colorCategoria =
-                                        Color(android.graphics.Color.parseColor(colorCategoriaHex))
+                                    val colorHex = doc.getString("color") ?: "000000"
+                                    val colorCategoriaHex = doc.getString("color_categoria")
                                     val esFavorito = doc.getBoolean("favorito") ?: false
                                     val listaCompartidos =
                                         (doc.get("compartido_con") as? List<String>) ?: emptyList()
                                     val estaCompartido = listaCompartidos.isNotEmpty()
-                                    val compartidoPor = doc.getString("creador") ?: ""
+                                    val compartidoPor = doc.getString("creador")
                                     val id = doc.id
 
-                                    Recordatorio(
-                                        id = id,
-                                        titulo = titulo,
-                                        fecha = fecha,
-                                        descripcion = descripcion,
-                                        color = color,
-                                        color_de_la_categoria = colorCategoria,
-                                        esFavorito = esFavorito,
-                                        esta_Compartido = estaCompartido,
-                                        lista_compartidos = listaCompartidos,
-                                        compartidoPor = compartidoPor
-                                    )
+                                        Recordatorio(
+                                            id = id,
+                                            titulo = titulo,
+                                            fecha = fecha,
+                                            descripcion = descripcion,
+                                            color = colorHex ,
+                                            color_de_la_categoria = colorCategoriaHex ,
+                                            esFavorito = esFavorito,
+                                            esta_Compartido = estaCompartido,
+                                            lista_compartidos = listaCompartidos,
+                                            compartidoPor = compartidoPor
+                                        )
+
                                 }
                                 _recordatorios.clear()
                                 _recordatorios.addAll(lista)
@@ -113,8 +110,8 @@ class ReminderViewModel @Inject constructor(
         val userId = auth.currentUser?.uid
         val recordatorioId = recordatorio.id
         if (userId != null && recordatorioId != null) {
-            firestore.collection("usuarios").document(userId)
-                .collection("recordatorios").document(recordatorioId)
+            firestore.collection("Users").document(userId)
+                .collection("Reminders").document(recordatorioId)
                 .set(recordatorio)
                 .addOnSuccessListener {
                     cargarRecordatorios()
@@ -129,8 +126,8 @@ class ReminderViewModel @Inject constructor(
     private fun actualizarCampoEnFirestore(recordatorioId: String, campo: String, valor: Any) {
         val userId = auth.currentUser?.uid
         if (userId != null) {
-            firestore.collection("usuarios").document(userId)
-                .collection("recordatorios").document(recordatorioId)
+            firestore.collection("Users").document(userId)
+                .collection("Reminder").document(recordatorioId)
                 .update(campo, valor)
         }
     }

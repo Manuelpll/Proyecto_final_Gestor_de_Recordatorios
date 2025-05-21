@@ -1,6 +1,5 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.newCategory
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,26 +20,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_newcategory
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import androidx.compose.foundation.layout.*
-
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_newcategory
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun NewCategoryScreen(navigateToCategory: Unit) {
+fun NewCategoryScreen(
+    viewModel: NewCategoryViewModel = hiltViewModel(),
+    navigateToBack: () -> Boolean,
+    navegateToCategory: () -> Unit
+) {
+    val nombre = viewModel.nombre
+    val colorIndex = viewModel.colorIndex
+    val colores = viewModel.colores
+
     Scaffold(
         bottomBar = {
             BottomAppBar(
                 containerColor = bar,
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                IconButton(onClick = { /* Acción de volver */ }) {
+                IconButton(onClick = { navigateToBack() }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
@@ -73,10 +78,9 @@ fun NewCategoryScreen(navigateToCategory: Unit) {
                     fontWeight = FontWeight.Bold
                 )
 
-                // Campo de nombre
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = { /* Actualizar nombre */ },
+                    value = nombre,
+                    onValueChange = { viewModel.onNombreChange(it) },
                     label = { Text("Nombre") },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.White,
@@ -85,48 +89,43 @@ fun NewCategoryScreen(navigateToCategory: Unit) {
                     modifier = Modifier.fillMaxWidth(0.8f)
                 )
 
-                // Slider de selección de color
-                val colorOptions = listOf(
-                    Color.Red,
-                    Color.Blue,
-                    Color.Green,
-                    Color.Yellow,
-                    Color.Magenta,
-                    Color.Cyan,
-                    Color.Black
-                )
-                var colorIndex by remember { mutableStateOf(0f) }
-    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically){
-    Text("Color", fontSize = 16.sp, color = Color.Black)
-        Spacer( modifier = Modifier.padding(start = 30.dp))
-    Slider(
-        value = colorIndex,
-        onValueChange = { colorIndex = it },
-        valueRange = 0f..(colorOptions.size - 1).toFloat(),
-        steps = colorOptions.size - 2,
-        modifier = Modifier.fillMaxWidth(0.6f),
-        colors = SliderDefaults.colors(
-            thumbColor = colorOptions[colorIndex.toInt()],
-            activeTrackColor = colorOptions[colorIndex.toInt()],
-            inactiveTrackColor = Color.LightGray
-        )
-    )}
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Color", fontSize = 16.sp, color = Color.Black)
+                    Spacer(modifier = Modifier.padding(start = 30.dp))
+                    Slider(
+                        value = colorIndex,
+                        onValueChange = { viewModel.onColorIndexChange(it) },
+                        valueRange = 0f..(colores.size - 1).toFloat(),
+                        steps = colores.size - 2,
+                        modifier = Modifier.fillMaxWidth(0.6f),
+                        colors = SliderDefaults.colors(
+                            thumbColor = colores[colorIndex.toInt()],
+                            activeTrackColor = colores[colorIndex.toInt()],
+                            inactiveTrackColor = Color.LightGray
+                        )
+                    )
+                }
 
-
-                // Botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(
-                        onClick = { /* Acción de crear */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB396))
+                        onClick = {
+                            viewModel.crearCategoria {
+                                navegateToCategory()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = button_newcategory)
                     ) {
                         Text("Crear", color = Color.Black)
                     }
 
                     Button(
-                        onClick = { /* Acción de cancelar */ },
+                        onClick = { navigateToBack() },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White)
                     ) {
                         Text("Cancelar", color = Color.Black)

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,12 +37,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_category
@@ -56,9 +63,19 @@ fun CategoryScreen(
     navegateToProfile: () -> Unit,
     navegateToReminder: () -> Unit,
     navegateToBack: () -> Boolean,
-    navegateToFriend: () -> Unit
+    navegateToFriend: () -> Unit,
+    navegateToHome: () -> Unit,
+    viewModel: CategoryViewModel = hiltViewModel()
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val categorias = viewModel.categorias
+    val fotoPerfilUrl = viewModel.fotoPerfilUrl
+
+    LaunchedEffect(Unit) {
+        viewModel.cargarCategorias()
+        viewModel.cargarFotoPerfil()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -83,15 +100,24 @@ fun CategoryScreen(
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Mis Recordatorios") },
-                                    onClick = { expanded = false /* Acción */ }
+                                    onClick = {
+                                        expanded = false
+                                        navegateToReminder()
+                                    }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Amigos") },
-                                    onClick = { expanded = false /* Acción */ }
+                                    onClick = {
+                                        expanded = false
+                                        navegateToFriend()
+                                    }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Home") },
-                                    onClick = { expanded = false /* Acción */ }
+                                    onClick = {
+                                        expanded = false
+                                        navegateToHome()
+                                    }
                                 )
                             }
                         }
@@ -103,25 +129,35 @@ fun CategoryScreen(
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.Center
                         )
-                        IconButton(onClick = {}, modifier = Modifier.size(70.dp)) {
-                            Icon(
-                                Icons.Default.AccountCircle,
-                                contentDescription = "Perfil",
-                                modifier = Modifier.size(70.dp)
-                                    .padding(end = 20.dp),
-                                tint = Color.Black
-                            )
+                        IconButton(onClick = { navegateToProfile() }, modifier = Modifier.size(70.dp)) {
+                            if (fotoPerfilUrl != null) {
+                                AsyncImage(
+                                    model = fotoPerfilUrl,
+                                    contentDescription = "Foto de perfil",
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.AccountCircle,
+                                    contentDescription = "Perfil",
+                                    modifier = Modifier.size(70.dp).padding(end = 20.dp),
+                                    tint = Color.Black
+                                )
+                            }
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = bar)
             )
-        }, bottomBar = {
+        },
+        bottomBar = {
             BottomAppBar(
                 containerColor = bar,
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
-                IconButton(onClick = { /* Acción de volver */ }) {
+                IconButton(onClick = { navegateToBack() }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
@@ -138,35 +174,17 @@ fun CategoryScreen(
                 .fillMaxSize()
                 .background(background_rnrfc)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
+            LazyColumn(
+                contentPadding = PaddingValues(24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Contenedor de las categorías
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = bar),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        CategoryCard(name = "Trabajo", color = Color(0xFFFF6A6A))
-                        CategoryCard(name = "Ocio", color = Color(0xFF8EE5F5))
-                        CategoryCard(name = "Reuniones pendientes", color = Color(0xFF29D100))
-                    }
+                items(categorias) { categoria ->
+                    CategoryCard(name = categoria.first, color = categoria.second)
                 }
             }
 
-            // Floating button abajo a la derecha
             FloatingActionButton(
-                onClick = { /* Acción agregar categoría */ },
+                onClick = { navegateToNewCategory() },
                 containerColor = floating_button_category,
                 shape = CircleShape,
                 modifier = Modifier
@@ -176,10 +194,8 @@ fun CategoryScreen(
                 Icon(Icons.Default.Add, contentDescription = "Agregar", tint = Color.Black)
             }
         }
-
     }
 }
-
 @Composable
 fun CategoryCard(name: String, color: Color) {
     Card(
@@ -188,7 +204,7 @@ fun CategoryCard(name: String, color: Color) {
             .height(50.dp),
         colors = CardDefaults.cardColors(containerColor = color),
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(1.dp)
     ) {
         Box(
             contentAlignment = Alignment.Center,

@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -66,9 +65,9 @@ fun NewReminderScreen(navegateToReminder: () -> Unit, viewModel: NewReminderView
             )
 
             OutlinedTextField(
-                value = viewModel.hora,
-                onValueChange = { viewModel.hora = it },
-                label = { Text("Hora de recuerdo") },
+                value = viewModel.fechaHora,
+                onValueChange = { viewModel.fechaHora = it },
+                label = { Text("Hora de recuerdo( Sigue el ejemplo)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -129,25 +128,27 @@ fun NewReminderScreen(navegateToReminder: () -> Unit, viewModel: NewReminderView
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        viewModel.categoriasDisponibles.forEach { (nombre, color) ->
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(12.dp)
-                                                .background(color, shape = CircleShape)
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(nombre)
+                        viewModel.categoriasDisponibles
+                            .filterKeys { it.isNotBlank() } //  filtramos claves vacías
+                            .forEach { (nombre, color) ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(12.dp)
+                                                    .background(color, shape = CircleShape)
+                                            )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(nombre)
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.categoriaSeleccionada = nombre
+                                        expanded = false
                                     }
-                                },
-                                onClick = {
-                                    viewModel.categoriaSeleccionada = nombre
-                                    expanded = false
-                                }
-                            )
-                        }
+                                )
+                         }
                     }
                 }
             }
@@ -178,9 +179,7 @@ fun NewReminderScreen(navegateToReminder: () -> Unit, viewModel: NewReminderView
                     onClick = {
                         viewModel.guardarRecordatorio(
                             onSuccess = { navegateToReminder() },
-                            onFailure = {
-                                Toast.makeText(context, "Error al guardar: ${it.message}", Toast.LENGTH_LONG).show()
-                            }
+                            onFailure = { Toast.makeText(context, "Error al guardar el recordatorio", Toast.LENGTH_SHORT).show()}
                         )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = default_button_color),

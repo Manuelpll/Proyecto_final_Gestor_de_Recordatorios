@@ -39,6 +39,8 @@ fun ProfileScreen(
     val userName by viewModel.userName.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
     val userId by viewModel.userId.collectAsState()
+    val userPhone by viewModel.userPhone.collectAsState()
+    val userUbication by viewModel.userUbication.collectAsState()
     val profileImageUrl by viewModel.profileImageUrl.collectAsState()
     val logoutSuccess by viewModel.logoutSuccess.collectAsState()
 
@@ -46,7 +48,6 @@ fun ProfileScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     var newTelefono by remember { mutableStateOf("") }
     var newUbicacion by remember { mutableStateOf("") }
-    var newCorreo by remember { mutableStateOf(userEmail) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
@@ -105,7 +106,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Usuario: $userName", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
             // ID personal
             Text(
@@ -131,9 +132,9 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Correo electrónico: $userEmail")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Teléfono: $newTelefono")
+                    Text("Teléfono: $userPhone")
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Ubicación: $newUbicacion")
+                    Text("Ubicación: $userUbication")
                 }
 
                 // Icono de edición
@@ -171,7 +172,7 @@ fun ProfileScreen(
         }
     }
 
-    // Dialogo edición
+    // Modo edición
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -191,13 +192,6 @@ fun ProfileScreen(
                         label = { Text("Nueva ubicación") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newCorreo,
-                        onValueChange = { newCorreo = it },
-                        label = { Text("Nuevo correo") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
             },
             confirmButton = {
@@ -205,7 +199,6 @@ fun ProfileScreen(
                     viewModel.editUserData(
                         newTelefono,
                         newUbicacion,
-                        newCorreo,
                         onSuccess = {
                             showEditDialog = false
                         },

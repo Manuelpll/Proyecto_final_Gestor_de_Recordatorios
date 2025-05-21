@@ -7,7 +7,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.proyecto_gestion_de_recordatorios.data.Usuario
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -75,7 +74,7 @@ class RegisterViewModel @Inject constructor(
         )
 
         val userMap = usuario.copy().toMap().toMutableMap()
-        imageUrl?.let { userMap["profileImageUrl"] = it }
+        imageUrl?.let { userMap["FotosPerfil"] = it }
 
         firestore.collection("Users").document(userId).set(userMap)
             .addOnSuccessListener { onSuccess() }
