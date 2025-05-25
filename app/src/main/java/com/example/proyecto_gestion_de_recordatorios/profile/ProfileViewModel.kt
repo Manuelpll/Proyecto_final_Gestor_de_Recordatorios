@@ -89,6 +89,7 @@ class ProfileViewModel @Inject constructor(
 
             userRef.update(updates)
                 .addOnSuccessListener {
+                    loadUserData()
                 }
                 .addOnFailureListener { firestoreError ->
                     onFailure("Error al actualizar datos en Firestore: ${firestoreError.message}")

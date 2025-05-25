@@ -3,15 +3,24 @@ package com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
+import com.example.proyecto_gestion_de_recordatorios.data.UsuarioAmigo
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import androidx.compose.ui.graphics.Color
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.UUID
+
 @HiltViewModel
 class ReminderViewModel @Inject constructor(
     private val auth: FirebaseAuth,
@@ -20,73 +29,36 @@ class ReminderViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _recordatorios = mutableStateListOf<Recordatorio>()
-    val recordatorios: List<Recordatorio> get() = _recordatorios
+    val recordatorios: List<Recordatorio> = _recordatorios
 
-    private val _searchQuery = mutableStateOf("")
-    val searchQuery: State<String> get() = _searchQuery
+    var searchQuery = mutableStateOf("")
+        private set
 
-    private val _fotoPerfilUrl= mutableStateOf<String?>(null)
-    val fotoPerfilUrl: State<String?> get() = _fotoPerfilUrl
+    var fotoPerfilUrl by mutableStateOf<String?>(null)
+        private set
 
-    init {
-        cargarRecordatorios()
-        cargarImagenPerfil()
-    }
+    private val _contactosAmigos = mutableStateListOf<UsuarioAmigo>()
+    val contactosAmigos: List<UsuarioAmigo> = _contactosAmigos
 
-    fun cargarImagenPerfil() {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
-            val ref = storage.reference.child("profile_images/$userId.jpg")
-            ref.downloadUrl.addOnSuccessListener { uri ->
-                _fotoPerfilUrl.value = uri.toString()
-            }
-        }
+    private val _seleccionados = mutableStateOf<List<DocumentReference>>(emptyList())
+    val amigosSeleccionados: List<DocumentReference> get() = _seleccionados.value
+
+    fun onSearchQueryChange(query: String) {
+        searchQuery.value = query
     }
 
     fun cargarRecordatorios() {
-        val uid = auth.currentUser?.uid
-        if (uid != null) {
-            firestore.collection("Users").document(uid)
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            firestore.collection("Users")
+                .document(userId)
+                .collection("Reminders")
                 .get()
-                .addOnSuccessListener { userSnapshot ->
-                    val todosIds =  userSnapshot.get("recordatorios_disponibles") as? List<String> ?: emptyList()
-                    if (todosIds.isNotEmpty()) {
-                        firestore.collectionGroup("Reminders")
-                            .whereIn(FieldPath.documentId(), todosIds)
-                            .get()
-                            .addOnSuccessListener { snapshot ->
-                                val lista = snapshot.documents.mapNotNull { doc ->
-                                    val titulo = doc.getString("titulo")
-                                    val fecha = doc.getString("fecha_hora")
-                                    val descripcion = doc.getString("descripcion")
-                                    val colorHex = doc.getString("color") ?: "000000"
-                                    val colorCategoriaHex = doc.getString("color_categoria")
-                                    val esFavorito = doc.getBoolean("favorito") ?: false
-                                    val listaCompartidos =
-                                        (doc.get("compartido_con") as? List<String>) ?: emptyList()
-                                    val estaCompartido = listaCompartidos.isNotEmpty()
-                                    val compartidoPor = doc.getString("creador")
-                                    val id = doc.id
-
-                                        Recordatorio(
-                                            id = id,
-                                            titulo = titulo,
-                                            fecha = fecha,
-                                            descripcion = descripcion,
-                                            color = colorHex ,
-                                            color_de_la_categoria = colorCategoriaHex ,
-                                            esFavorito = esFavorito,
-                                            esta_Compartido = estaCompartido,
-                                            lista_compartidos = listaCompartidos,
-                                            compartidoPor = compartidoPor
-                                        )
-
-                                }
-                                _recordatorios.clear()
-                                _recordatorios.addAll(lista)
-                            }
-                    } else {
-                        _recordatorios.clear()
+                .addOnSuccessListener { result ->
+                    _recordatorios.clear()
+                    for (doc in result) {
+                        val recordatorio = doc.toObject(Recordatorio::class.java).copy(id = doc.id)
+                        _recordatorios.add(recordatorio)
                     }
                 }
         }
@@ -94,41 +66,110 @@ class ReminderViewModel @Inject constructor(
 
     fun actualizarFavorito(recordatorio: Recordatorio) {
         val userId = auth.currentUser?.uid
-        val recordatorioId = recordatorio.id
-        if (userId != null && recordatorioId != null) {
-            val esFavoritoActual = recordatorio.esFavorito == true
-            val nuevoFavorito = !esFavoritoActual
+        val nuevoEstado = !(recordatorio.esFavorito ?: false)
 
-            actualizarCampoEnFirestore(recordatorioId, "favorito", nuevoFavorito)
-
-            _recordatorios.find { it.id == recordatorioId }?.esFavorito = nuevoFavorito
-        }
-    }
-
-
-    fun actualizarRecordatorio(recordatorio: Recordatorio) {
-        val userId = auth.currentUser?.uid
-        val recordatorioId = recordatorio.id
-        if (userId != null && recordatorioId != null) {
-            firestore.collection("Users").document(userId)
-                .collection("Reminders").document(recordatorioId)
-                .set(recordatorio)
+        if (userId != null) {
+            firestore.collection("Users")
+                .document(userId)
+                .collection("Reminders")
+                .document(recordatorio.id ?: return)
+                .update("esFavorito", nuevoEstado)
                 .addOnSuccessListener {
                     cargarRecordatorios()
                 }
         }
     }
 
-    fun onSearchQueryChange(query: String) {
-        _searchQuery.value = query
+    fun cargarImagenPerfil() {
+        val userId = auth.currentUser?.uid
+        val ref = storage.reference.child("FotosPerfil/$userId.jpg")
+        ref.downloadUrl.addOnSuccessListener { url ->
+            fotoPerfilUrl = url.toString()
+        }
     }
 
-    private fun actualizarCampoEnFirestore(recordatorioId: String, campo: String, valor: Any) {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
-            firestore.collection("Users").document(userId)
-                .collection("Reminder").document(recordatorioId)
-                .update(campo, valor)
+    fun obtenerContactos() {
+        val userId = auth.currentUser?.uid ?: return
+        val usuarioDocRef = firestore.collection("Users").document(userId)
+
+        usuarioDocRef.get().addOnSuccessListener { doc ->
+            val contactosRaw = doc["contactos"] as? List<*>
+            val contactos: List<DocumentReference> = (contactosRaw?.mapNotNull {
+                when (it) {
+                    is DocumentReference -> it
+                    is String -> {
+                        // Verifica si es solo el ID (sin "/")
+                        if (!it.contains("/")) {
+                            // Construye el path completo manualmente
+                            firestore.collection("Users").document(it)
+                        } else {
+                            // Ya es un path completo
+                            firestore.document(it)
+                        }
+                    }
+
+                    else -> null
+                }
+            } ?: _contactosAmigos.clear()) as List<DocumentReference>
+
+            contactos.forEach { ref ->
+                ref.get().addOnSuccessListener { amigoDoc ->
+                    val nombre = amigoDoc.getString("nombre") ?: "Desconocido"
+                    val amigoId = ref.id
+                    val storageRef = storage.reference.child("FotosPerfil/$amigoId.jpg")
+
+                    storageRef.downloadUrl.addOnSuccessListener { imagenUrl ->
+                        val amigo = UsuarioAmigo(nombre = nombre, imagenUrl = imagenUrl.toString(), referencia = ref)
+                        _contactosAmigos.add(amigo)
+                    }.addOnFailureListener {
+                        val amigo = UsuarioAmigo(nombre = nombre, imagenUrl = "", referencia = ref)
+                        _contactosAmigos.add(amigo)
+                    }
+                }
+            }
         }
+    }
+
+    fun toggleSeleccionAmigo(amigoRef: DocumentReference) {
+        _seleccionados.value = if (_seleccionados.value.contains(amigoRef)) {
+            _seleccionados.value - amigoRef
+        } else {
+            _seleccionados.value + amigoRef
+        }
+    }
+
+    fun limpiarSeleccionAmigos() {
+        _seleccionados.value = emptyList()
+    }
+
+    fun compartirRecordatorio(
+        recordatorio: Recordatorio,
+        onCompartido: () -> Unit
+    ) {
+        val userId = auth.currentUser?.uid ?: return
+        val recordatorioId = recordatorio.id ?: return
+
+        val recordatorioRef = firestore.collection("Users")
+            .document(userId)
+            .collection("Reminders")
+            .document(recordatorioId)
+
+        amigosSeleccionados.forEach { amigoRef ->
+            // Añadir referencia al array "recordatorios_disponibles"
+            amigoRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef))
+
+            // Crear notificación para el amigo
+            val notificacion = hashMapOf(
+                "descripcion" to "Te han compartido un recordatorio.",
+                "usuario" to amigoRef,
+                "recordatorio" to recordatorioRef
+            )
+
+            firestore.collection("Notification").add(notificacion)
+        }
+
+        // Limpiar selección y notificar
+        limpiarSeleccionAmigos()
+        onCompartido()
     }
 }

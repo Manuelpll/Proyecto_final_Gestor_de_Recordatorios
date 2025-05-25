@@ -196,17 +196,26 @@ fun ProfileScreen(
             },
             confirmButton = {
                 Button(onClick = {
-                    viewModel.editUserData(
-                        newTelefono,
-                        newUbicacion,
-                        onSuccess = {
-                            showEditDialog = false
-                        },
-                        onFailure = { error ->
-                            errorMessage = error
-                            showError = true
-                        }
-                    )
+                    val telefonoRegex = Regex("^[0-9]{9}\$")
+
+                    if (!telefonoRegex.matches(newTelefono)) {
+                        errorMessage = "El teléfono debe tener  9 dígitos "
+                        showError = true
+                    } else {
+                        viewModel.editUserData(
+                            newTelefono,
+                            newUbicacion,
+                            onSuccess = {
+                                showEditDialog = false
+                                newTelefono = ""
+                                newUbicacion = ""
+                            },
+                            onFailure = { error ->
+                                errorMessage = error
+                                showError = true
+                            }
+                        )
+                    }
                 }) {
                     Text("Guardar")
                 }

@@ -31,9 +31,8 @@ class HomeViewModel @Inject constructor(
 
     private fun obtenerTodosLosRecordatorios() {
         val userId = auth.currentUser?.uid ?: return
-        val userPath = "/Users/$userId"
 
-        firestore.collectionGroup("Reminders")
+        firestore.collection("Users").document(userId).collection("Reminders")
             .get()
             .addOnSuccessListener { querySnapshot ->
                 val recordatoriosList = querySnapshot.documents.mapNotNull { doc ->

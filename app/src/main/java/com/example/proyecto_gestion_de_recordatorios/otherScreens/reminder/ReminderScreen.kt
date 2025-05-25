@@ -2,6 +2,7 @@ package com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +41,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -53,13 +57,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
@@ -80,22 +87,30 @@ fun ReminderScreen(
     navegateToHome: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val recordatorios by remember { derivedStateOf {
-        viewModel.recordatorios.filter { it.titulo?.contains(viewModel.searchQuery.value, ignoreCase = true) == true }
-    }}
+    val recordatorios by remember {
+        derivedStateOf {
+            viewModel.recordatorios.filter {
+                it.titulo?.contains(viewModel.searchQuery.value, ignoreCase = true) == true
+            }
+        }
+    }
     val searchQuery by viewModel.searchQuery
     val fotoPerfilUrl = viewModel.fotoPerfilUrl
+    val amigos = viewModel.contactosAmigos
+    val seleccionados = viewModel.amigosSeleccionados
+
+    var recordatorioACompartir by remember { mutableStateOf<Recordatorio?>(null) }
+    var showCompartirDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.cargarRecordatorios()
         viewModel.cargarImagenPerfil()
-        Log.d("FirestoreDebug","Datos: $recordatorios")
+        viewModel.obtenerContactos()
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.background(bar),
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -104,18 +119,13 @@ fun ReminderScreen(
                     ) {
                         Box {
                             IconButton(onClick = { expanded = true }) {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    contentDescription = "Menú",
-                                    tint = Color.Black
-                                )
+                                Icon(Icons.Default.Menu, contentDescription = "Menú", tint = Color.Black)
                             }
-                            DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                DropdownMenuItem(text = { Text("Home") }, onClick = { expanded = false
-                                navegateToHome()})
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                DropdownMenuItem(text = { Text("Home") }, onClick = {
+                                    expanded = false
+                                    navegateToHome()
+                                })
                                 DropdownMenuItem(text = { Text("Amigos") }, onClick = {
                                     expanded = false
                                     navegateToFriend()
@@ -134,7 +144,10 @@ fun ReminderScreen(
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.Center
                         )
-                        IconButton(onClick = { navegateToProfile() }, modifier = Modifier.size(70.dp)) {
+                        IconButton(
+                            onClick = { navegateToProfile() },
+                            modifier = Modifier.size(70.dp)
+                        ) {
                             if (fotoPerfilUrl != null) {
                                 AsyncImage(
                                     model = fotoPerfilUrl,
@@ -147,7 +160,9 @@ fun ReminderScreen(
                                 Icon(
                                     Icons.Default.AccountCircle,
                                     contentDescription = "Perfil",
-                                    modifier = Modifier.size(70.dp).padding(end = 20.dp),
+                                    modifier = Modifier
+                                        .size(70.dp)
+                                        .padding(end = 20.dp),
                                     tint = Color.Black
                                 )
                             }
@@ -164,11 +179,7 @@ fun ReminderScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
                 IconButton(onClick = { navegateToBack() }) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = Color.Black
-                    )
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.Black)
                 }
             }
         },
@@ -181,8 +192,10 @@ fun ReminderScreen(
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier   .padding(innerPadding)
+        Column(modifier = Modifier
+            .padding(innerPadding)
             .padding(16.dp)) {
+
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { viewModel.onSearchQueryChange(it) },
@@ -203,116 +216,198 @@ fun ReminderScreen(
                     ReminderCard(
                         recordatorio = recordatorio,
                         onClick = { recordatorio.id?.let { navegateToSelectedReminder(it) } },
-                        onFavoritoClick = { viewModel.actualizarFavorito(recordatorio) }
+                        onFavoritoClick = { viewModel.actualizarFavorito(recordatorio) },
+                        onCompartirClick = {
+                            recordatorioACompartir = recordatorio
+                            showCompartirDialog = true
+                        }
+                    )
+                }
+            }
+
+            if (showCompartirDialog && recordatorioACompartir != null) {
+                Dialog(onDismissRequest = {
+                    showCompartirDialog = false
+                    viewModel.limpiarSeleccionAmigos()
+                }) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        tonalElevation = 8.dp
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Selecciona amigos para compartir:", fontWeight = FontWeight.Bold)
+
+                            LazyColumn(modifier = Modifier.height(300.dp)) {
+                                items(amigos) { amigo ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                viewModel.toggleSeleccionAmigo(amigo.referencia)
+                                            }
+                                            .padding(8.dp)
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(amigo.imagenUrl),
+                                            contentDescription = "Foto de perfil",
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(CircleShape),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(text = amigo.nombre)
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        Checkbox(
+                                            checked = seleccionados.contains(amigo.referencia),
+                                            onCheckedChange = {
+                                                viewModel.toggleSeleccionAmigo(amigo.referencia)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                                TextButton(onClick = {
+                                    showCompartirDialog = false
+                                    viewModel.limpiarSeleccionAmigos()
+                                }) {
+                                    Text("Cancelar")
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Button(
+                                    onClick = {
+                                        recordatorioACompartir?.let { recordatorio ->
+                                            viewModel.compartirRecordatorio(recordatorio) {
+                                                showCompartirDialog = false
+                                                viewModel.limpiarSeleccionAmigos()
+                                            }
+                                        }
+                                    },
+                                    enabled = seleccionados.isNotEmpty(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir)
+                                ) {
+                                    Text("Compartir")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+@Composable
+fun ReminderCard(recordatorio: Recordatorio, onClick: () -> Unit?, onFavoritoClick: () -> Unit, onCompartirClick: () -> Unit) {
+    val colorRecordatorio = try {
+        Color(
+            android.graphics.Color.parseColor(
+                if (recordatorio.color.startsWith("#")) recordatorio.color else "#${recordatorio.color}"
+            )
+        )
+    } catch (e: IllegalArgumentException) {
+        Color.Gray // o cualquier color por defecto
+    }
+    val colorCategoria = try {
+        Color(android.graphics.Color.parseColor("#${recordatorio.color_de_la_categoria}"))
+    } catch (e: Exception) {
+        null
+    }
+    colorRecordatorio?.let {
+        Modifier
+            .fillMaxWidth()
+            .background(color = it, RoundedCornerShape(8.dp))
+            .padding(12.dp)
+            .clickable { onClick() }
+    }?.let {
+        Box(
+            modifier = it
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row {
+                        IconButton(onClick = { onFavoritoClick() }) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Favorito",
+                                tint = if (recordatorio.esFavorito == true) Color.Yellow else Color.Black
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = recordatorio.titulo ?: "Sin título",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    }
+
+                    Text(
+                        text = recordatorio.fecha ?: "",
+                        fontSize = 14.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = recordatorio.descripcion ?: "",
+                    color = Color.Black,
+                    fontSize = 14.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(
+                        onClick = { onCompartirClick() },
+                        colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir),
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(
+                            horizontal = 16.dp,
+                            vertical = 4.dp
+                        )
+                    ) {
+                        Text("Compartir", fontSize = 12.sp, color = Color.Black)
+                    }
+
+                    Row {
+                        recordatorio.compartidoPor?.takeIf { it.isNotBlank() }?.let {
+                            Text(
+                                text = "Compartido por $it",
+                                fontSize = 12.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+                }
+
+                colorCategoria?.let { it1 ->
+                    Modifier
+                        .align(Alignment.End)
+                        .offset(y = (-48).dp, x = 4.dp)
+                        .size(16.dp)
+                        .background(color = it1, shape = CircleShape)
+                }?.let { it2 ->
+                    Box(
+                        modifier = it2
                     )
                 }
             }
         }
     }
 }
-
-@Composable
-fun ReminderCard(
-    recordatorio: Recordatorio,
-    onClick: () -> Unit,
-    onFavoritoClick: () -> Unit
-) {
-
-        val colorRecordatorio = try {
-            Color(android.graphics.Color.parseColor("#${recordatorio.color}"))
-        } catch (e: Exception) {
-            null
-        }
-        val colorCategoria = try {
-            Color(android.graphics.Color.parseColor("#${recordatorio.color_de_la_categoria}"))
-        } catch (e: Exception) {
-            null
-        }
-    colorRecordatorio?.let {
-        Modifier
-            .fillMaxWidth()
-            .background( color = it, RoundedCornerShape(8.dp))
-            .padding(12.dp)
-            .clickable { onClick() }
-    }?.let {
-        Box(
-        modifier = it
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row {
-                    IconButton(onClick = { onFavoritoClick() }) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = "Favorito",
-                            tint = if (recordatorio.esFavorito == true) Color.Yellow else Color.Black
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = recordatorio.titulo ?: "Sin título",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                }
-
-                Text(
-                    text = recordatorio.fecha ?: "",
-                    fontSize = 14.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = recordatorio.descripcion ?: "",
-                color = Color.Black,
-                fontSize = 14.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    onClick = { /* Acción compartir */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir),
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    Text("Compartir", fontSize = 12.sp, color = Color.Black)
-                }
-
-                Row {
-                    recordatorio.compartidoPor?.takeIf { it.isNotBlank() }?.let {
-                        Text(
-                            text = "Compartido por $it",
-                            fontSize = 12.sp,
-                            color = Color.DarkGray
-                        )
-                    }
-                }
-            }
-
-            colorCategoria?.let { it1 ->
-                Modifier
-                    .align(Alignment.End)
-                    .offset(y = (-48).dp, x = 4.dp)
-                    .size(16.dp)
-                    .background( color = it1, shape = CircleShape)
-            }?.let { it2 ->
-                Box(
-                    modifier = it2
-                )
-            }
-        }
-    }
-    }
-        }

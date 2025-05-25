@@ -1,6 +1,7 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedReminder
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,6 +71,7 @@ fun SelectedReminderScreen(
 
     // Cargar datos al entrar en la pantalla
     LaunchedEffect(id_recordatorio) {
+        Log.d("SelectedReminderScreen", "ID recibido: $id_recordatorio")
         viewModel.loadReminderById(id_recordatorio)
         viewModel.loadProfilePhoto()
     }
@@ -113,7 +115,7 @@ fun SelectedReminderScreen(
                             }
                         }
                         Text(
-                            text = "Mis Recordatorios",
+                            text = "Recordatorio seleccionado",
                             color = Color.Black,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
@@ -159,10 +161,11 @@ fun SelectedReminderScreen(
                 }
             }
         }
-    ) {
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -194,7 +197,7 @@ fun SelectedReminderScreen(
 
                         Text(
                             text = reminder.descripcion ?: "Sin descripción",
-                            color = Color.Red,
+                            color = Color.Black,
                             fontSize = 16.sp,
                             textAlign = TextAlign.Center
                         )
@@ -257,10 +260,14 @@ fun SelectedReminderScreen(
         }
     }
     }
-fun String.toColorOrDefault(default: Color = Color.Gray): Color {
+fun String?.toColorOrDefault(default: Color = Color.Gray): Color {
+    if (this.isNullOrBlank()) return default
+
     return try {
         Color(android.graphics.Color.parseColor(this))
     } catch (e: IllegalArgumentException) {
+        default
+    } catch (e: StringIndexOutOfBoundsException) {
         default
     }
 }

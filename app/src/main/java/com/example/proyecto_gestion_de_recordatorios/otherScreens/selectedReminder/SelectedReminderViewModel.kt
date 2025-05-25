@@ -1,6 +1,7 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedReminder
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,14 +31,30 @@ class SelectedReminderViewModel @Inject constructor(
     fun loadReminderById(id: String) {
         viewModelScope.launch {
             try {
+                val uid = auth.currentUser?.uid
+                if (uid == null) {
+                    Log.e("SelectedReminderVM", "Usuario no autenticado")
+                    return@launch
+                }
+
+                Log.d("SelectedReminderVM", "Buscando recordatorio con ID: $id para user $uid")
+
                 val docSnapshot = firestore.collection("Users")
-                    .document(auth.currentUser?.uid ?: "")
+                    .document(uid)
                     .collection("Reminders")
                     .document(id)
                     .get().await()
-                val reminder = docSnapshot.toObject(Recordatorio::class.java)
-                _selectedReminder.value = reminder
+
+                if (docSnapshot.exists()) {
+                    val reminder = docSnapshot.toObject(Recordatorio::class.java)
+                    _selectedReminder.value = reminder
+                    Log.d("SelectedReminderVM", "Recordatorio encontrado: $reminder")
+                } else {
+                    Log.w("SelectedReminderVM", "No se encontró el recordatorio con ID: $id")
+                    _selectedReminder.value = null
+                }
             } catch (e: Exception) {
+                Log.e("SelectedReminderVM", "Error al obtener recordatorio: ${e.message}")
                 _selectedReminder.value = null
             }
         }

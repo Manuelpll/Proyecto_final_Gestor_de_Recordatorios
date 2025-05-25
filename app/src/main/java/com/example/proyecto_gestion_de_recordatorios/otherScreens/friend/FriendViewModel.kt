@@ -30,33 +30,46 @@ class FriendViewModel @Inject constructor(
     }
 
     private fun cargarAmigos() {
-        val uid = auth.currentUser?.uid
+        val uid = auth.currentUser?.uid ?: return
 
-        if (uid != null) {
-            firestore.collection("Users").document(uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    val listaUids = document.get("contactos") as? List<String> ?: emptyList()
-                    for (amigoUid in listaUids) {
-                        firestore.collection("Users").document(amigoUid)
-                            .get()
-                            .addOnSuccessListener { amigoDoc ->
-                                val nombre = amigoDoc.getString("nombre") ?: "Nombre desconocido"
-                                val amigo = Usuario(
-                                    uid = amigoUid,
-                                    nombre = nombre,
-                                    foto_perfil = amigoDoc.getString("foto_perfil_url")
-                                )
-                                _listaAmigos.add(amigo)
-                            }
-                    }
+        firestore.collection("Users").document(uid)
+            .get()
+            .addOnSuccessListener { document ->
+                val listaUids = document.get("contactos") as? List<String> ?: emptyList()
+                for (amigoUid in listaUids) {
+                    firestore.collection("Users").document(amigoUid)
+                        .get()
+                        .addOnSuccessListener { amigoDoc ->
+                            val nombre = amigoDoc.getString("nombre") ?: "Nombre desconocido"
+
+                            // Obteniene la imagen de perfil desde Storage
+                            val ref = storage.reference.child("profile_images/$amigoUid.jpg")
+                            ref.downloadUrl
+                                .addOnSuccessListener { uri ->
+                                    val amigo = Usuario(
+                                        uid = amigoUid,
+                                        nombre = nombre,
+                                        foto_perfil = uri.toString()
+                                    )
+                                    _listaAmigos.add(amigo)
+                                }
+                                .addOnFailureListener {
+                                    // Si falla, añadimos el amigo sin imagen
+                                    val amigo = Usuario(
+                                        uid = amigoUid,
+                                        nombre = nombre,
+                                        foto_perfil = null
+                                    )
+                                    _listaAmigos.add(amigo)
+                                }
+                        }
                 }
-        }
+            }
     }
 
     private fun cargarFotoPerfil() {
         val uid = auth.currentUser?.uid ?: return
-        val ref = storage.reference.child("imagenes_perfil/$uid.jpg")
+        val ref = storage.reference.child("profile_images/$uid.jpg")
         ref.downloadUrl.addOnSuccessListener { uri ->
             _fotoPerfil.value = uri.toString()
         }
