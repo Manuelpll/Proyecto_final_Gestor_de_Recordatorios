@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 import androidx.compose.foundation.border
@@ -156,8 +155,25 @@ fun HomeScreen(
 
 @Composable
 fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Unit) {
-    val categoriaColor = recordatorio.color_de_la_categoria?.toColorOrDefault() ?: Color.Gray
-    val reminderColor = recordatorio.color.toColorOrDefault() ?: Color.Gray
+    val colorRecordatorio = try {
+        Color(
+            android.graphics.Color.parseColor(
+                if (recordatorio.color.startsWith("#")) recordatorio.color else "#${recordatorio.color}"
+            )
+        )
+    } catch (e: IllegalArgumentException) {
+        Color.Gray
+    }
+
+    val colorCategoria = try {
+        Color(
+            android.graphics.Color.parseColor(
+                if (recordatorio.color_de_la_categoria?.startsWith("#") == true) recordatorio.color_de_la_categoria else "#${recordatorio.color_de_la_categoria}"
+            )
+        )
+    } catch (e: Exception) {
+        null
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,7 +181,7 @@ fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Un
     ) {
         Card(
             modifier = Modifier.fillMaxSize(),
-            colors = CardDefaults.cardColors( containerColor =  reminderColor
+            colors = CardDefaults.cardColors( containerColor =  colorRecordatorio
             ),
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(4.dp),
@@ -194,19 +210,17 @@ fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Un
                 }
             }
         }
-        Box(
-            modifier = Modifier
+       colorCategoria?.let {
+            Modifier
                 .align(Alignment.TopEnd)
                 .padding(4.dp)
-                .size(12.dp)
-                .background(color= categoriaColor, shape = RectangleShape)
-        )
-    }
-}
-fun String.toColorOrDefault(default: Color = Color.Gray): Color {
-    return try {
-        Color(android.graphics.Color.parseColor(this))
-    } catch (e: IllegalArgumentException) {
-        default
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(color = it)
+        }?.let {
+            Box(
+                modifier = it
+            )
+        }
     }
 }

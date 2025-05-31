@@ -146,18 +146,22 @@ class NewReminderViewModel @Inject constructor(
             onFailure(Exception("El título no puede estar vacío."))
             return
         }
-
         if (descripcion.isBlank()) {
             onFailure(Exception("La descripción no puede estar vacía."))
             return
         }
 
         val colorSeleccionado: Color = colores[colorIndex.toInt()]
-        val colorHex = String.format("#%06X", 0xFFFFFF and colorSeleccionado.toArgb())
+        val colorHex = String.format("#%06X", colorSeleccionado.toArgb())
+
         val prioridadSeleccionada = prioridades[prioridadIndex.toInt()]
-        val colorCategoria = categoriaSeleccionada?.let {
-            categoriasDisponibles[it]?.toArgb()?.toString()
+
+        val colorCategoria = categoriaSeleccionada?.let { key ->
+            categoriasDisponibles[key]?.let { color ->
+                String.format("#%06X", color.toArgb())
+            }
         } ?: ""
+
         val recordatorio = Recordatorio(
             titulo = titulo,
             descripcion = descripcion,
@@ -169,7 +173,7 @@ class NewReminderViewModel @Inject constructor(
             esEditable = esEditable,
             esta_Compartido = false,
             lista_compartidos = emptyList(),
-            compartidoPor = null
+            compartidoPor = uid
         )
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -181,9 +185,16 @@ class NewReminderViewModel @Inject constructor(
                     userDoc.set(hashMapOf("creado" to true)).await()
                 }
 
-                val docRef = userDoc.collection("Reminders").add(recordatorio).await()
+
+                val docRef = userDoc.collection("Reminders").document()
+                val recordatorioConId = recordatorio.copy(id = docRef.id)
+
+
+                docRef.set(recordatorioConId).await()
+
 
                 userDoc.update("recordatorios_disponibles", FieldValue.arrayUnion(docRef)).await()
+
 
                 firestore.collection("Notification").add(
                     mapOf(
@@ -195,10 +206,9 @@ class NewReminderViewModel @Inject constructor(
                 ).await()
 
                 withContext(Dispatchers.Main) {
-                    programarNotificacion(context, recordatorio)
+                    programarNotificacion(context, recordatorioConId)
                     onSuccess()
                 }
-
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     onFailure(e)
@@ -208,8 +218,13 @@ class NewReminderViewModel @Inject constructor(
     }
 
     fun cargarCategorias() {
+        val uid = auth.currentUser?.uid ?: run {
+            Log.e("Categorias", "Usuario no autenticado.")
+            return
+        }
+
         firestore.collection("Categories")
-            .whereEqualTo("usuarioId", auth.uid)
+            .whereEqualTo("usuarioId", uid)
             .get()
             .addOnSuccessListener { snapshot ->
                 val categorias = mutableMapOf<String, Color>()
@@ -218,22 +233,25 @@ class NewReminderViewModel @Inject constructor(
                     val colorHex = document.getString("color")
                     if (!colorHex.isNullOrBlank()) {
                         try {
-                            val colorInt = Color(android.graphics.Color.parseColor(colorHex))
-                            categorias[nombre] = colorInt
-                        } catch (_: IllegalArgumentException) {
+                            val colorInt = colorHex.toLong(16).toInt()
+                            categorias[nombre] = Color(colorInt)
+                        } catch (e: Exception) {
                             Log.w("CategoriaInvalida", "Categoría '$nombre' con color inválido: '$colorHex'")
-                            categorias[nombre] = Color(0xFF000000) // Color por defecto si parsea mal
+                            categorias[nombre] = Color.Black
                         }
                     } else {
-                        Log.w("CategoriaInvalida", "Categoría '$nombre' con color inválido: '$colorHex'")
-                        categorias[nombre] = Color(0xFF000000) // Color por defecto si está vacío o nulo
+                        Log.w("CategoriaInvalida", "Categoría '$nombre' sin color definido.")
+                        categorias[nombre] = Color.Black
                     }
                 }
                 categoriasDisponibles = categorias
+                Log.d("Categorias", "Categorías cargadas: ${categorias.keys}")
+            }
+            .addOnFailureListener {
+                Log.e("Categorias", "Error al obtener categorías: ${it.message}")
             }
     }
 
-}
 
     @SuppressLint("ScheduleExactAlarm")
     private fun programarNotificacion(context: Context, recordatorio: Recordatorio) {
@@ -272,3 +290,4 @@ class NewReminderViewModel @Inject constructor(
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, horaNotificacion, pendingIntent)
     }
+}

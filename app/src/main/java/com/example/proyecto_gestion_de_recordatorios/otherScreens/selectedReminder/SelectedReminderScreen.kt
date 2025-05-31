@@ -1,12 +1,12 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedReminder
 
-import android.annotation.SuppressLint
+
 import android.util.Log
-import androidx.compose.foundation.background
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,22 +14,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -52,10 +61,17 @@ import coil.compose.AsyncImage
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import androidx.compose.runtime.collectAsState
-import com.example.proyecto_gestion_de_recordatorios.ui.theme.selectedreminder_compartir
+import androidx.compose.runtime.mutableStateListOf
+import com.example.proyecto_gestion_de_recordatorios.ui.theme.reminder_compatir
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import coil.compose.rememberAsyncImagePainter
+import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SelectedReminderScreen(
     navegateToProfile: () -> Unit,
@@ -66,26 +82,30 @@ fun SelectedReminderScreen(
     viewModel: SelectedReminderViewModel = hiltViewModel(),
     navegateToBack: () -> Boolean
 ) {
-    val recordatorio by viewModel.selectedReminder.collectAsState()
+    val reminder by viewModel.selectedReminder.collectAsState()
     val profilePhotoUrl by viewModel.profilePhotoUrl.collectAsState()
-
-    // Cargar datos al entrar en la pantalla
+    val amigos = viewModel.contactosAmigos
+    val seleccionados = viewModel.amigosSeleccionados
+    val context = LocalContext.current
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showCompartirDialog by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+    var recordatorioACompartir by remember { mutableStateOf<Recordatorio?>(null) }
+    var nuevoTitulo by remember { mutableStateOf("") }
+    var nuevaDescripcion by remember { mutableStateOf("") }
+    val nombreUsuario = viewModel.nombreUsuarioActual
     LaunchedEffect(id_recordatorio) {
-        Log.d("SelectedReminderScreen", "ID recibido: $id_recordatorio")
         viewModel.loadReminderById(id_recordatorio)
         viewModel.loadProfilePhoto()
+        viewModel.obtenerContactos()
     }
-    val categoriaColor = recordatorio?.color_de_la_categoria?.toColorOrDefault() ?: Color.Gray
-    var expanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.background(bar),
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Box {
@@ -100,46 +120,45 @@ fun SelectedReminderScreen(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
-                                DropdownMenuItem(
-                                    text = { Text("Home") },
-                                    onClick = { expanded = false; navegateToHome() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Amigos") },
-                                    onClick = { expanded = false; navegateToFriend() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Categorías Creadas") },
-                                    onClick = { expanded = false; navegateToCategory() }
-                                )
+                                DropdownMenuItem(text = { Text("Home") }, onClick = {
+                                    expanded = false
+                                    navegateToHome()
+                                })
+                                DropdownMenuItem(text = { Text("Amigos") }, onClick = {
+                                    expanded = false
+                                    navegateToFriend()
+                                })
+                                DropdownMenuItem(text = { Text("Categorías Creadas") }, onClick = {
+                                    expanded = false
+                                    navegateToCategory()
+                                })
                             }
                         }
                         Text(
                             text = "Recordatorio seleccionado",
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 16.dp),
                             color = Color.Black,
-                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center
+                            fontSize = 18.sp
                         )
-                        IconButton(
-                            onClick = { navegateToProfile() },
-                            modifier = Modifier.size(70.dp)
-                        ) {
+                        IconButton(onClick = { navegateToProfile() }) {
                             if (profilePhotoUrl != null) {
                                 AsyncImage(
                                     model = profilePhotoUrl,
                                     contentDescription = "Foto de perfil",
                                     modifier = Modifier
-                                        .size(50.dp)
+                                        .size(40.dp)
                                         .clip(CircleShape),
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
                                 Icon(
-                                    Icons.Default.AccountCircle,
+                                    imageVector = Icons.Default.AccountCircle,
                                     contentDescription = "Perfil",
-                                    modifier = Modifier.size(70.dp).padding(end = 20.dp),
+                                    modifier = Modifier.size(40.dp),
                                     tint = Color.Black
                                 )
                             }
@@ -149,9 +168,8 @@ fun SelectedReminderScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = bar)
             )
         },
-        containerColor = background_rnrfc,
         bottomBar = {
-            BottomAppBar(containerColor = bar, contentPadding = PaddingValues(horizontal = 16.dp)) {
+            BottomAppBar(containerColor = bar) {
                 IconButton(onClick = { navegateToBack() }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
@@ -160,114 +178,215 @@ fun SelectedReminderScreen(
                     )
                 }
             }
-        }
-    ) { innerPadding ->
-        Box(
+        },
+        containerColor = background_rnrfc
+    ) { padding ->
+        Column(
             modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
         ) {
-            recordatorio?.let { reminder->
-                val colorReminder= reminder.color.toColorOrDefault() ?: Color.LightGray
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colorReminder)
-                        .padding(20.dp)
+            reminder?.let {
+
+                val colorRecordatorio = try {
+                    Color(
+                        android.graphics.Color.parseColor(
+                            if (it.color.startsWith("#")) it.color else "#${it.color}"
+                        )
+                    )
+                } catch (e: IllegalArgumentException) {
+                    Color.Gray
+                }
+                val colorCategoria = try {
+                    Color(
+                        android.graphics.Color.parseColor(
+                            if (it.color_de_la_categoria?.startsWith("#") == true) it.color_de_la_categoria else "#${it.color_de_la_categoria}"
+                        )
+                    )
+                } catch (e: Exception) {
+                    null
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = colorRecordatorio)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.End)
-                                .size(20.dp)
-                                .background(color = categoriaColor)
-                        )
+                    Box(modifier = Modifier.fillMaxWidth()) {
 
-                        Spacer(modifier = Modifier.height(10.dp))
 
-                        Text(
-                            text = reminder.titulo ?: "Sin título",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Text(
-                            text = reminder.descripcion ?: "Sin descripción",
-                            color = Color.Black,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Fecha en la que está:", fontWeight = FontWeight.SemiBold)
-                            Text(reminder.fecha ?: "Sin fecha")
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Prioridad:", fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "~${reminder.prioridad}"
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Button(
-                            onClick = { /* Acción compartir */ },
-                            colors = ButtonDefaults.buttonColors(containerColor = selectedreminder_compartir),
-                            shape = RoundedCornerShape(30.dp)
-                        ) {
-                            Text("Compartir", color = Color.White)
-                        }
-
-                        if (reminder.esta_Compartido == false) {
-                            Spacer(modifier = Modifier.height(15.dp))
-                            Text(
-                                "No tienes permiso para editarlo",
-                                fontSize = 12.sp,
-                                color = Color.DarkGray
-                            )
-                        } else {
-
-                            reminder.compartidoPor?.let {
-                                Spacer(modifier = Modifier.height(5.dp))
-                                Text(
-                                    text = "Compartido por $it",
-                                    fontSize = 12.sp,
-                                    color = Color.DarkGray
+                            colorCategoria?.let { it1 ->
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(it1)
+                            }?.let { it2 ->
+                                Box(
+                                    modifier = it2
                                 )
+                            }
+
+
+
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = it.titulo ?: "",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(text = it.descripcion ?: "", fontSize = 16.sp)
+                            Spacer(Modifier.height(8.dp))
+                            Text(text = "Fecha: ${it.fecha ?: ""}")
+                            Text(text = "Prioridad: ${it.prioridad ?: ""}")
+
+
+                            if (it.esta_Compartido == true && it.compartidoPor != nombreUsuario) {
+                                it.compartidoPor?.let { nombre ->
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(text = "Compartido por: $nombre", fontSize = 12.sp)
+                                }
+                            }
+
+                            Spacer(Modifier.height(16.dp))
+
+
+                            Row(horizontalArrangement = Arrangement.Center) {
+                                Button(
+                                    onClick = { showCompartirDialog = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir)
+                                ) {
+                                    Text("Compartir")
+                                }
+                                Spacer(Modifier.width(140.dp))
+                                if (reminder?.esEditable == true) {
+                                    IconButton(
+                                        onClick = {
+                                            nuevoTitulo = reminder?.titulo ?: ""
+                                            nuevaDescripcion = reminder?.descripcion ?: ""
+                                            showEditDialog = true
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Editar")
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            } ?: run {
-                Text(text = "Cargando recordatorio...", fontSize = 16.sp)
+            } ?: Text("Cargando...", fontSize = 16.sp)
+
+            if (showEditDialog) {
+                AlertDialog(
+                    onDismissRequest = { showEditDialog = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            viewModel.editarTituloYDescripcion(
+                                nuevoTitulo,
+                                nuevaDescripcion,
+                                id_recordatorio = id_recordatorio
+                            )
+                            showEditDialog = false
+                        }) { Text("Guardar") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showEditDialog = false }) { Text("Cancelar") }
+                    },
+                    title = { Text("Editar Recordatorio") },
+                    text = {
+                        Column {
+                            OutlinedTextField(
+                                value = nuevoTitulo,
+                                onValueChange = { nuevoTitulo = it },
+                                label = { Text("Título") }
+                            )
+                            OutlinedTextField(
+                                value = nuevaDescripcion,
+                                onValueChange = { nuevaDescripcion = it },
+                                label = { Text("Descripción") }
+                            )
+                        }
+                    }
+                )
+            }
+
+            if (showCompartirDialog && recordatorioACompartir != null) {
+                Dialog(onDismissRequest = {
+                    showCompartirDialog = false
+                    viewModel.limpiarSeleccionAmigos()
+                }) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        tonalElevation = 8.dp
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Selecciona amigos para compartir:", fontWeight = FontWeight.Bold)
+
+                            LazyColumn(modifier = Modifier.height(300.dp)) {
+                                items(amigos) { amigo ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(8.dp)
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(amigo.imagenUrl),
+                                            contentDescription = "Foto de perfil",
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(CircleShape),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(text = amigo.nombre)
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        Checkbox(
+                                            checked = seleccionados.any { it.id == amigo.referencia.split("/").last() },
+                                            onCheckedChange = {
+                                                viewModel.toggleSeleccionAmigo(amigo.referencia)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                                TextButton(onClick = {
+                                    showCompartirDialog = false
+                                    viewModel.limpiarSeleccionAmigos()
+                                }) {
+                                    Text("Cancelar")
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Button(
+                                    onClick = {
+                                        Log.d("UI", "Amigos seleccionados antes de compartir: ${viewModel.amigosSeleccionados}")
+                                        recordatorioACompartir?.let { recordatorio ->
+                                            viewModel.compartirRecordatorio(recordatorio, context) {
+                                                Toast.makeText(context, "Recordatorio compartido correctamente", Toast.LENGTH_SHORT).show()
+                                                showCompartirDialog = false
+                                                viewModel.limpiarSeleccionAmigos()
+                                            }
+                                        }
+                                    },
+                                    enabled = seleccionados.isNotEmpty(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir)
+                                ) {
+                                    Text("Compartir")
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-    }
-    }
-fun String?.toColorOrDefault(default: Color = Color.Gray): Color {
-    if (this.isNullOrBlank()) return default
-
-    return try {
-        Color(android.graphics.Color.parseColor(this))
-    } catch (e: IllegalArgumentException) {
-        default
-    } catch (e: StringIndexOutOfBoundsException) {
-        default
     }
 }

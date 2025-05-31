@@ -1,31 +1,41 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder
 
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 import com.example.proyecto_gestion_de_recordatorios.data.UsuarioAmigo
-import com.google.firebase.Timestamp
+import com.example.proyecto_gestion_de_recordatorios.otherScreens.newReminder.ReminderReceiver
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.SetOptions
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.UUID
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 
 @HiltViewModel
 class ReminderViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _recordatorios = mutableStateListOf<Recordatorio>()
@@ -47,20 +57,78 @@ class ReminderViewModel @Inject constructor(
         searchQuery.value = query
     }
 
-    fun cargarRecordatorios() {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
-            firestore.collection("Users")
-                .document(userId)
-                .collection("Reminders")
+    fun obtenerTodosLosRecordatorios() {
+        val userId = auth.currentUser?.uid ?: return
+
+        val userDocRef = firestore.collection("Users").document(userId)
+
+        userDocRef.get().addOnSuccessListener { userSnapshot ->
+            val recordatoriosCompartidosRefs =
+                userSnapshot.get("recordatorios_disponibles") as? List<DocumentReference> ?: emptyList()
+
+            firestore.collection("Users").document(userId).collection("Reminders")
                 .get()
-                .addOnSuccessListener { result ->
-                    _recordatorios.clear()
-                    for (doc in result) {
-                        val recordatorio = doc.toObject(Recordatorio::class.java).copy(id = doc.id)
-                        _recordatorios.add(recordatorio)
+                .addOnSuccessListener { propiosSnapshot ->
+
+                    val propiosList = propiosSnapshot.documents.mapNotNull { doc ->
+                        docToRecordatorio(doc)
+                    }.toMutableList()
+
+                    val recordatoriosIds = propiosList.map { it.id }.toMutableSet()
+
+                    if (recordatoriosCompartidosRefs.isNotEmpty()) {
+                        val tareas = recordatoriosCompartidosRefs.map { ref -> ref.get() }
+
+                        Tasks.whenAllSuccess<DocumentSnapshot>(tareas)
+                            .addOnSuccessListener { documentosCompartidos ->
+                                documentosCompartidos.forEach { doc ->
+                                    val recordatorio = docToRecordatorio(doc)
+                                    recordatorio?.let {
+                                        if (!recordatoriosIds.contains(it.id)) {
+                                            propiosList.add(it)
+                                            recordatoriosIds.add(it.id)
+                                        }
+                                    }
+                                }
+
+                                _recordatorios.clear()
+                                _recordatorios.addAll(propiosList)
+                            }
+                    } else {
+                        _recordatorios.clear()
+                        _recordatorios.addAll(propiosList)
                     }
                 }
+        }
+    }
+
+    private fun docToRecordatorio(doc: DocumentSnapshot): Recordatorio? {
+        return try {
+            val id = doc.id
+            val titulo = doc.getString("titulo")
+            val fecha = doc.getString("fecha_hora")
+            val descripcion = doc.getString("descripcion")
+            val colorHex = doc.getString("color") ?: "#FFFFFF"
+            val colorCategoriaHex = doc.getString("color_de_la_categoria") ?: "#FFFFFF"
+            val esFavorito = doc.getBoolean("favorito") ?: false
+            val listaCompartidos = (doc.get("compartido_con") as? List<String>) ?: emptyList()
+            val estaCompartido = listaCompartidos.isNotEmpty()
+            val compartidoPor = doc.getString("creador") ?: ""
+
+            Recordatorio(
+                id = id,
+                titulo = titulo,
+                fecha = fecha,
+                descripcion = descripcion,
+                color = colorHex,
+                color_de_la_categoria = colorCategoriaHex,
+                esFavorito = esFavorito,
+                esta_Compartido = estaCompartido,
+                lista_compartidos = listaCompartidos,
+                compartidoPor = compartidoPor
+            )
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -75,14 +143,14 @@ class ReminderViewModel @Inject constructor(
                 .document(recordatorio.id ?: return)
                 .update("esFavorito", nuevoEstado)
                 .addOnSuccessListener {
-                    cargarRecordatorios()
+                    obtenerTodosLosRecordatorios()
                 }
         }
     }
 
     fun cargarImagenPerfil() {
         val userId = auth.currentUser?.uid
-        val ref = storage.reference.child("FotosPerfil/$userId.jpg")
+        val ref = storage.reference.child("profile_images/$userId.jpg")
         ref.downloadUrl.addOnSuccessListener { url ->
             fotoPerfilUrl = url.toString()
         }
@@ -98,12 +166,9 @@ class ReminderViewModel @Inject constructor(
                 when (it) {
                     is DocumentReference -> it
                     is String -> {
-                        // Verifica si es solo el ID (sin "/")
                         if (!it.contains("/")) {
-                            // Construye el path completo manualmente
                             firestore.collection("Users").document(it)
                         } else {
-                            // Ya es un path completo
                             firestore.document(it)
                         }
                     }
@@ -116,13 +181,17 @@ class ReminderViewModel @Inject constructor(
                 ref.get().addOnSuccessListener { amigoDoc ->
                     val nombre = amigoDoc.getString("nombre") ?: "Desconocido"
                     val amigoId = ref.id
-                    val storageRef = storage.reference.child("FotosPerfil/$amigoId.jpg")
+                    val storageRef = storage.reference.child("profile_images/$amigoId.jpg")
 
                     storageRef.downloadUrl.addOnSuccessListener { imagenUrl ->
-                        val amigo = UsuarioAmigo(nombre = nombre, imagenUrl = imagenUrl.toString(), referencia = ref)
+                        val amigo = UsuarioAmigo(
+                            nombre = nombre,
+                            imagenUrl = imagenUrl.toString(),
+                            referencia = ref.path
+                        )
                         _contactosAmigos.add(amigo)
                     }.addOnFailureListener {
-                        val amigo = UsuarioAmigo(nombre = nombre, imagenUrl = "", referencia = ref)
+                        val amigo = UsuarioAmigo(nombre = nombre, imagenUrl = "", referencia = ref.path)
                         _contactosAmigos.add(amigo)
                     }
                 }
@@ -130,12 +199,21 @@ class ReminderViewModel @Inject constructor(
         }
     }
 
-    fun toggleSeleccionAmigo(amigoRef: DocumentReference) {
-        _seleccionados.value = if (_seleccionados.value.contains(amigoRef)) {
-            _seleccionados.value - amigoRef
+    fun toggleSeleccionAmigo(amigoRef: String) {
+        val currentList = _seleccionados.value.toMutableList()
+
+        val path = if (amigoRef.contains("/")) amigoRef else "Users/$amigoRef"
+        val refAmigo = firestore.document(path)
+
+        val index = currentList.indexOfFirst { it.id == refAmigo.id }
+        if (index != -1) {
+            currentList.removeAt(index)
         } else {
-            _seleccionados.value + amigoRef
+            currentList.add(refAmigo)
         }
+        _seleccionados.value = currentList
+
+        Log.d("toggleSeleccionAmigo", "Amigos seleccionados actuales: ${_seleccionados.value.map { it.id }}")
     }
 
     fun limpiarSeleccionAmigos() {
@@ -144,32 +222,124 @@ class ReminderViewModel @Inject constructor(
 
     fun compartirRecordatorio(
         recordatorio: Recordatorio,
-        onCompartido: () -> Unit
+        context: Context,
+        onCompartido: () -> Unit,
     ) {
         val userId = auth.currentUser?.uid ?: return
         val recordatorioId = recordatorio.id ?: return
 
-        val recordatorioRef = firestore.collection("Users")
-            .document(userId)
-            .collection("Reminders")
-            .document(recordatorioId)
-
-        amigosSeleccionados.forEach { amigoRef ->
-            // Añadir referencia al array "recordatorios_disponibles"
-            amigoRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef))
-
-            // Crear notificación para el amigo
-            val notificacion = hashMapOf(
-                "descripcion" to "Te han compartido un recordatorio.",
-                "usuario" to amigoRef,
-                "recordatorio" to recordatorioRef
-            )
-
-            firestore.collection("Notification").add(notificacion)
+        if (recordatorio.compartidoPor != userId && (recordatorio.compartidoPor?.isNotBlank() == true)) {
+            Log.w("compartirRecordatorio", "No puedes compartir un recordatorio que no creaste.")
+            return
         }
 
-        // Limpiar selección y notificar
-        limpiarSeleccionAmigos()
-        onCompartido()
+        val usuarioRef = firestore.collection("Users").document(userId)
+        usuarioRef.get().addOnSuccessListener { usuarioSnapshot ->
+            if (!usuarioSnapshot.exists()) {
+                Log.e("compartirRecordatorio", "El usuario no existe en Firestore.")
+                return@addOnSuccessListener
+            }
+
+            val recordatorioRef = usuarioRef
+                .collection("Reminders")
+                .document(recordatorioId)
+            Log.d("compartirRecordatorio", "Amigos seleccionados: $amigosSeleccionados")
+
+            if (amigosSeleccionados.isEmpty()) {
+                Log.w("compartirRecordatorio", "No hay amigos seleccionados. No se compartira a nadie.")
+            }
+
+            amigosSeleccionados.forEach { amigoId ->
+                Log.d("compartirRecordatorio", "Iterando con amigoRef: $amigoId (id=${amigoId.id})")
+                val amigoRef = firestore.collection("Users").document(amigoId.toString())
+
+                amigoRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef.path))
+                    .addOnSuccessListener {
+                        Log.d("compartirRecordatorio", "Añadido a recordatorios_disponibles de $amigoId")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("compartirRecordatorio", "Error al añadir a recordatorios_disponibles de $amigoId: ${e.message}")
+                    }
+
+                val notificacion = mapOf(
+                    "descripcion" to (recordatorio.titulo ?: "Recordatorio sin título"),
+                    "usuario" to amigoRef.path,
+                    "recordatorio" to recordatorioRef,
+                    "fechaCreacion" to FieldValue.serverTimestamp()
+                )
+
+                firestore.collection("Notification").add(notificacion)
+                    .addOnSuccessListener { doc ->
+                        Log.d("compartirRecordatorio", "Notificación creada para $amigoId: ${doc.id}")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("compartirRecordatorio", "Error al crear notificación para $amigoId: ${e.message}")
+                    }
+
+                recordatorioRef.update("lista_compartidos", FieldValue.arrayUnion(amigoRef.id))
+                    .addOnSuccessListener {
+                        Log.d("compartirRecordatorio", "Añadido $amigoId a lista_compartidos de $recordatorioId")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("compartirRecordatorio", "Error al añadir a lista_compartidos: ${e.message}")
+                    }
+
+                programarNotificacion(context, recordatorio, amigoId.hashCode())
+                Log.d("compartirRecordatorio", "Notificación programada para $amigoId")
+            }
+
+            recordatorioRef.update("esta_Compartido", true)
+                .addOnSuccessListener {
+                    Log.d("compartirRecordatorio", "Recordatorio $recordatorioId marcado como compartido")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("compartirRecordatorio", "Error al actualizar esta_Compartido: ${e.message}")
+                }
+
+            limpiarSeleccionAmigos()
+            Log.d("compartirRecordatorio", "Selección de amigos limpiada")
+            onCompartido()
+            Log.d("compartirRecordatorio", "Proceso completado correctamente")
+        }.addOnFailureListener { e ->
+            Log.e("compartirRecordatorio", "Error al obtener datos del usuario: ${e.message}")
+        }
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    private fun programarNotificacion(context: Context, recordatorio: Recordatorio, uniqueId: Int) {
+        val fechaString = recordatorio.fecha
+        if (fechaString.isNullOrBlank()) {
+            Toast.makeText(context, "Error: fecha no válida", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val fecha = try {
+            sdf.parse(fechaString)
+        } catch (e: ParseException) {
+            null
+        }
+
+        if (fecha == null) {
+            Toast.makeText(context, "Error al parsear la fecha", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val horaRecordatorio = fecha.time
+        val horaNotificacion = horaRecordatorio - 2 * 60 * 60 * 1000
+
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra("titulo", recordatorio.titulo)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            uniqueId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, horaNotificacion, pendingIntent)
     }
 }

@@ -2,6 +2,7 @@ package com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder
 
 import android.annotation.SuppressLint
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -73,7 +75,7 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_reminder
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.reminder_compatir
 
-@OptIn(ExperimentalMaterial3Api::class)
+ @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ReminderScreen(
@@ -87,6 +89,7 @@ fun ReminderScreen(
     navegateToHome: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val recordatorios by remember {
         derivedStateOf {
             viewModel.recordatorios.filter {
@@ -103,7 +106,7 @@ fun ReminderScreen(
     var showCompartirDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.cargarRecordatorios()
+        viewModel.obtenerTodosLosRecordatorios()
         viewModel.cargarImagenPerfil()
         viewModel.obtenerContactos()
     }
@@ -244,9 +247,6 @@ fun ReminderScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable {
-                                                viewModel.toggleSeleccionAmigo(amigo.referencia)
-                                            }
                                             .padding(8.dp)
                                     ) {
                                         Image(
@@ -261,10 +261,10 @@ fun ReminderScreen(
                                         Text(text = amigo.nombre)
                                         Spacer(modifier = Modifier.weight(1f))
                                         Checkbox(
-                                            checked = seleccionados.contains(amigo.referencia),
-                                            onCheckedChange = {
-                                                viewModel.toggleSeleccionAmigo(amigo.referencia)
-                                            }
+                                                checked = seleccionados.any { it.id == amigo.referencia.split("/").last() },
+                                        onCheckedChange = {
+                                            viewModel.toggleSeleccionAmigo(amigo.referencia)
+                                        }
                                         )
                                     }
                                 }
@@ -284,8 +284,10 @@ fun ReminderScreen(
 
                                 Button(
                                     onClick = {
+                                        Log.d("UI", "Amigos seleccionados antes de compartir: ${viewModel.amigosSeleccionados}")
                                         recordatorioACompartir?.let { recordatorio ->
-                                            viewModel.compartirRecordatorio(recordatorio) {
+                                            viewModel.compartirRecordatorio(recordatorio, context) {
+                                                Toast.makeText(context, "Recordatorio compartido correctamente", Toast.LENGTH_SHORT).show()
                                                 showCompartirDialog = false
                                                 viewModel.limpiarSeleccionAmigos()
                                             }
@@ -305,7 +307,12 @@ fun ReminderScreen(
     }
 }
 @Composable
-fun ReminderCard(recordatorio: Recordatorio, onClick: () -> Unit?, onFavoritoClick: () -> Unit, onCompartirClick: () -> Unit) {
+fun ReminderCard(
+    recordatorio: Recordatorio,
+    onClick: () -> Unit,
+    onFavoritoClick: () -> Unit,
+    onCompartirClick: () -> Unit
+) {
     val colorRecordatorio = try {
         Color(
             android.graphics.Color.parseColor(
@@ -313,99 +320,108 @@ fun ReminderCard(recordatorio: Recordatorio, onClick: () -> Unit?, onFavoritoCli
             )
         )
     } catch (e: IllegalArgumentException) {
-        Color.Gray // o cualquier color por defecto
+        Color.Gray
     }
+
     val colorCategoria = try {
-        Color(android.graphics.Color.parseColor("#${recordatorio.color_de_la_categoria}"))
+        Color(
+            android.graphics.Color.parseColor(
+                if (recordatorio.color_de_la_categoria?.startsWith("#") == true) recordatorio.color_de_la_categoria else "#${recordatorio.color_de_la_categoria}"
+            )
+        )
     } catch (e: Exception) {
         null
     }
-    colorRecordatorio?.let {
-        Modifier
+
+    Box(
+        modifier = Modifier
             .fillMaxWidth()
-            .background(color = it, RoundedCornerShape(8.dp))
-            .padding(12.dp)
+            .background(color = colorRecordatorio, shape = RoundedCornerShape(8.dp))
             .clickable { onClick() }
-    }?.let {
-        Box(
-            modifier = it
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row {
-                        IconButton(onClick = { onFavoritoClick() }) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Favorito",
-                                tint = if (recordatorio.esFavorito == true) Color.Yellow else Color.Black
+            .padding(12.dp)
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = colorRecordatorio, shape = RoundedCornerShape(8.dp))
+                    .clickable { onClick() }
+                    .padding(12.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = onFavoritoClick) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Favorito",
+                                    tint = if (recordatorio.esFavorito == true) Color.Yellow else Color.Black
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = recordatorio.titulo ?: "Sin título",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
                             )
                         }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = recordatorio.titulo ?: "Sin título",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
+
+                        Box {
+                            Text(
+                                text = recordatorio.fecha ?: "",
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(end = 24.dp)
+                            )
+                            colorCategoria?.let { catColor ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(14.dp)
+                                        .align(Alignment.TopEnd)
+                                        .offset(x = 4.dp, y = (-6).dp)
+                                        .background(color = catColor, shape = CircleShape)
+                                )
+                            }
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = recordatorio.fecha ?: "",
-                        fontSize = 14.sp
+                        text = recordatorio.descripcion ?: "",
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
-                }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = recordatorio.descripcion ?: "",
-                    color = Color.Black,
-                    fontSize = 14.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Button(
-                        onClick = { onCompartirClick() },
-                        colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir),
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = PaddingValues(
-                            horizontal = 16.dp,
-                            vertical = 4.dp
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Compartir", fontSize = 12.sp, color = Color.Black)
-                    }
+                        Button(
+                            onClick = onCompartirClick,
+                            colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir),
+                            shape = RoundedCornerShape(20.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                        ) {
+                            Text("Compartir", fontSize = 12.sp, color = Color.Black)
+                        }
 
-                    Row {
                         recordatorio.compartidoPor?.takeIf { it.isNotBlank() }?.let {
                             Text(
                                 text = "Compartido por $it",
                                 fontSize = 12.sp,
-                                color = Color.DarkGray
+                                color = Color.DarkGray,
+                                modifier = Modifier.padding(start = 8.dp)
                             )
                         }
                     }
-                }
-
-                colorCategoria?.let { it1 ->
-                    Modifier
-                        .align(Alignment.End)
-                        .offset(y = (-48).dp, x = 4.dp)
-                        .size(16.dp)
-                        .background(color = it1, shape = CircleShape)
-                }?.let { it2 ->
-                    Box(
-                        modifier = it2
-                    )
                 }
             }
         }
