@@ -31,6 +31,10 @@ import com.example.proyecto_gestion_de_recordatorios.data.Usuario
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_newfriend
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login_newfriend
+
+/**
+ * Pantalla que aparece al añadir a un nuevo amigo
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable

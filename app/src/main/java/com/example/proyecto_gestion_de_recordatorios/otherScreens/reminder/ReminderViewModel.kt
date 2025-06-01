@@ -29,7 +29,9 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-
+/**
+ * ViewModel de la RemiderScreen
+ */
 @HiltViewModel
 class ReminderViewModel @Inject constructor(
     private val auth: FirebaseAuth,
@@ -212,7 +214,6 @@ class ReminderViewModel @Inject constructor(
             currentList.add(refAmigo)
         }
         _seleccionados.value = currentList
-
         Log.d("toggleSeleccionAmigo", "Amigos seleccionados actuales: ${_seleccionados.value.map { it.id }}")
     }
 
@@ -243,7 +244,6 @@ class ReminderViewModel @Inject constructor(
             val recordatorioRef = usuarioRef
                 .collection("Reminders")
                 .document(recordatorioId)
-            Log.d("compartirRecordatorio", "Amigos seleccionados: $amigosSeleccionados")
 
             if (amigosSeleccionados.isEmpty()) {
                 Log.w("compartirRecordatorio", "No hay amigos seleccionados. No se compartira a nadie.")
@@ -254,7 +254,6 @@ class ReminderViewModel @Inject constructor(
 
                 amigoDocRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido a recordatorios_disponibles de ${amigoRef.id}")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al añadir a recordatorios_disponibles de ${amigoRef.id}: ${e.message}")
@@ -270,7 +269,6 @@ class ReminderViewModel @Inject constructor(
 
                 firestore.collection("Notification").add(notificacion)
                     .addOnSuccessListener { doc ->
-                        Log.d("compartirRecordatorio", "Notificación creada para ${amigoRef.id}: ${doc.id}")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al crear notificación para ${amigoRef.id}: ${e.message}")
@@ -279,28 +277,23 @@ class ReminderViewModel @Inject constructor(
 
                 recordatorioRef.update("lista_compartidos", FieldValue.arrayUnion(amigoRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido ${amigoRef.id} a lista_compartidos de $recordatorioId")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al añadir a lista_compartidos: ${e.message}")
                     }
 
                 programarNotificacion(context, recordatorio, amigoRef.id.hashCode())
-                Log.d("compartirRecordatorio", "Notificación programada para ${amigoRef.id}")
             }
 
             recordatorioRef.update("esta_Compartido", true)
                 .addOnSuccessListener {
-                    Log.d("compartirRecordatorio", "Recordatorio $recordatorioId marcado como compartido")
                 }
                 .addOnFailureListener { e ->
                     Log.e("compartirRecordatorio", "Error al actualizar esta_Compartido: ${e.message}")
                 }
 
             limpiarSeleccionAmigos()
-            Log.d("compartirRecordatorio", "Selección de amigos limpiada")
             onCompartido()
-            Log.d("compartirRecordatorio", "Proceso completado correctamente")
         }.addOnFailureListener { e ->
             Log.e("compartirRecordatorio", "Error al obtener datos del usuario: ${e.message}")
         }

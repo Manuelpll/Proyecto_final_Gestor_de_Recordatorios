@@ -12,6 +12,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+/**
+ * ViewModel de la NewCategoryScreen
+ */
 @HiltViewModel
 class NewCategoryViewModel @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -104,10 +107,7 @@ class NewCategoryViewModel @Inject constructor(
         Color(0xFFBDBDBD),
         Color(0xFF9E9E9E),
         Color(0xFF757575),
-        Color(0xFF616161),
-        Color(0xFF424242),
-        Color(0xFF212121),
-        Color(0xFF000000) )
+        )
 
     fun onNombreChange(nuevo: String) {
         nombre = nuevo
@@ -116,7 +116,7 @@ class NewCategoryViewModel @Inject constructor(
     fun onColorIndexChange(nuevo: Float) {
         colorIndex = nuevo
     }
-
+//Metodo para crear la categoria
     fun crearCategoria(onSuccess: () -> Unit) {
         val userId =user.currentUser?.uid
         if (userId == null) {
@@ -135,8 +135,7 @@ class NewCategoryViewModel @Inject constructor(
 
         firestore.collection("Categories")
             .add(categoria)
-            .addOnSuccessListener {Log.d("FirestoreDebug", "Categoría creada correctamente")
-                onSuccess() }
+            .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> Log.e("NuevaCategoria", "Error al guardar: ${e.message}") }
     }
 }

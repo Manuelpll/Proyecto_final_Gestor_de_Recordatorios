@@ -18,6 +18,9 @@ import com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedRemind
 import com.example.proyecto_gestion_de_recordatorios.profile.ProfileScreen
 import com.example.proyecto_gestion_de_recordatorios.register.RegisterScreen
 
+/**
+ * Funcion que se encarga de la navegacion de toda la app
+ */
 @Composable
 fun NavigationWrapper(navController: NavHostController) {
     NavHost(navController = navController, startDestination = InitialScreen) {

@@ -23,7 +23,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_cancel
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.default_button_color
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.newreminder_select_category
 
-
+/**
+ * Pantalla para crear un nuevo recordatorio
+ */
 @Composable
 fun NewReminderScreen(navegateToReminder: () -> Unit, viewModel: NewReminderViewModel = hiltViewModel()) {
 

@@ -11,6 +11,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+/**
+ * ViewModel de la NewFriendScrenn
+ */
 @HiltViewModel
 class NewFriendViewModel @Inject constructor(
     private val firestore: FirebaseFirestore,

@@ -3,7 +3,6 @@ package com.example.proyecto_gestion_de_recordatorios.profile
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
+/**
+ * ViewModel de la ProfileScreen
+ */
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val auth: FirebaseAuth,
@@ -37,7 +39,7 @@ class ProfileViewModel @Inject constructor(
     private val _profileImageUrl = MutableStateFlow("")
     val profileImageUrl = _profileImageUrl.asStateFlow()
 
-    // Variable para indicar que la sesión fue cerrada
+
     private val _logoutSuccess = MutableStateFlow(false)
     val logoutSuccess = _logoutSuccess.asStateFlow()
 
@@ -45,12 +47,12 @@ class ProfileViewModel @Inject constructor(
         loadUserData()
         loadProfileImage()
     }
-
+    // Método para cerrar sesion
     fun logout() {
         auth.signOut()
         _logoutSuccess.value = true
     }
-
+    // Método para cargar la informacion del usuario
     private fun loadUserData() {
         val uid = auth.currentUser?.uid ?: return
 
@@ -81,7 +83,7 @@ class ProfileViewModel @Inject constructor(
 
         val userRef = firestore.collection("Users").document(uid)
 
-        // Primero actualizamos Firestore
+
         userRef.get().addOnSuccessListener { document ->
             val updates = mutableMapOf<String, Any>()
             updates["telefono"] = newTelefono

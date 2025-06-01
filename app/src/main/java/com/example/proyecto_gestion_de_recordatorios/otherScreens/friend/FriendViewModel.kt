@@ -11,6 +11,9 @@ import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+/**
+ * ViewModel de la FriendScreen
+ */
 @HiltViewModel
 class FriendViewModel @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -54,7 +57,6 @@ class FriendViewModel @Inject constructor(
                                     _listaAmigos.add(amigo)
                                 }
                                 .addOnFailureListener {
-                                    // Si falla, añadimos el amigo sin imagen
                                     val amigo = Usuario(
                                         uid = amigoUid,
                                         nombre = nombre,

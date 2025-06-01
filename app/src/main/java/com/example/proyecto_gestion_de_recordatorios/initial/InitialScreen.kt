@@ -31,6 +31,10 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_initial
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_61
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.text_to_initial
+
+/**
+ * Pantalla Inicial de la Aplicacion
+ */
 @Preview
 @Composable
 fun InitialScreen(navegateToRegister: () -> Unit={}, navegateToLogin: () -> Unit={}) {

@@ -12,6 +12,9 @@ import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+/**
+ * ViewModel de la RegisterScreen
+ */
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val auth: FirebaseAuth,
@@ -47,7 +50,6 @@ class RegisterViewModel @Inject constructor(
                 if (task.isSuccessful) {
                     val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
 
-                    // Subir imagen si existe
                     if (imageUri != null) {
                         val ref = storage.reference.child("profile_images/$userId.jpg")
                         ref.putFile(imageUri!!)
@@ -56,7 +58,6 @@ class RegisterViewModel @Inject constructor(
                                 saveUserInFirestore(userId, downloadUrl.toString(), onSuccess)
                             }
                     } else {
-                        // Sin imagen
                         saveUserInFirestore(userId, null, onSuccess)
                     }
                 } else {
@@ -69,8 +70,8 @@ class RegisterViewModel @Inject constructor(
         val usuario = Usuario(
             nombre = nombre,
             email = email,
-            contactos = emptyList(), // contacto vacío inicial
-            recordatorios_disponibles = emptyList() // array vacío inicial
+            contactos = emptyList(),
+            recordatorios_disponibles = emptyList()
         )
 
         val userMap = usuario.copy().toMap().toMutableMap()

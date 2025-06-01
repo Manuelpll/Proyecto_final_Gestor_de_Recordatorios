@@ -30,6 +30,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_registe
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_profile_cerrar_sesion
 
+/**
+ * Pantalla del perfil de la aplicación
+ */
 @Composable
 fun ProfileScreen(
     navigateToInitial: () -> Unit,

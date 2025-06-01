@@ -15,6 +15,9 @@ import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 
+/**
+ * ViewModel de HomeScreen
+ */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val auth: FirebaseAuth,
@@ -81,9 +84,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Convierte un DocumentSnapshot en un Recordatorio
-     */
     private fun docToRecordatorio(doc: DocumentSnapshot): Recordatorio? {
         return try {
             val id = doc.id

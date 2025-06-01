@@ -1,6 +1,5 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.category
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +10,10 @@ import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import androidx.compose.ui.graphics.Color
+
+/**
+ * ViewModel de la CategoryScreen
+ */
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
     private val firestore: FirebaseFirestore,

@@ -42,10 +42,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +53,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_category
 
+/**
+ * Pantalla donde muestra todas las categorias creadas
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable

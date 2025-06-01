@@ -29,6 +29,9 @@ import androidx.compose.material3.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_newcategory
 
+/**
+ * Pantalla que aparece para crear una nueva categoria
+ */
 @Composable
 fun NewCategoryScreen(
     viewModel: NewCategoryViewModel = hiltViewModel(),

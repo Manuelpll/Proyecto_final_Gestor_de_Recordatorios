@@ -16,7 +16,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
 import com.example.proyecto_gestion_de_recordatorios.data.UsuarioAmigo
 import com.example.proyecto_gestion_de_recordatorios.otherScreens.newReminder.ReminderReceiver
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
@@ -29,9 +28,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+
+/**
+ * ViewModel de la SelectedReminderScreen
+ */
 @HiltViewModel
 class SelectedReminderViewModel @Inject constructor(
     private val auth: FirebaseAuth,
@@ -92,7 +94,6 @@ class SelectedReminderViewModel @Inject constructor(
                     if (snapshot.exists()) {
                         val data = snapshot.data
                         if (data != null) {
-                            // Conversión manual de los campos relevantes, ignorando lista_compartidos
                             val recordatorio = Recordatorio(
                                 id = data["id"] as? String ?: "",
                                 titulo = data["titulo"] as? String ?: "",
@@ -124,7 +125,7 @@ class SelectedReminderViewModel @Inject constructor(
             }
         }
     }
-
+//Metodo que edita algunos campos del recordatorio
     fun editarTituloYDescripcion(
         nuevoTitulo: String,
         nuevaDescripcion: String,
@@ -133,10 +134,7 @@ class SelectedReminderViewModel @Inject constructor(
         val uid = auth.currentUser?.uid ?: return
 
         if (id_recordatorio.isBlank()) {
-            Log.e(
-                "ViewModel",
-                "ID del recordatorio recibido es nulo o vacío. No se puede actualizar."
-            )
+            Log.e("ViewModel", "ID del recordatorio recibido es nulo o vacío. No se puede actualizar.")
             return
         }
 
@@ -153,10 +151,6 @@ class SelectedReminderViewModel @Inject constructor(
                         "descripcion" to nuevaDescripcion
                     )
                 ).await()
-
-                Log.d("ViewModel", "Recordatorio actualizado correctamente en Firestore")
-
-                // Recargar el recordatorio para actualizar el state
                 loadReminderById(id_recordatorio)
             } catch (e: Exception) {
                 Log.e("ViewModel", "Error al editar recordatorio: ${e.message}")
@@ -175,7 +169,7 @@ class SelectedReminderViewModel @Inject constructor(
             }
         }
     }
-
+//Metodo que obtiene los contactos del usuario para poder elegirlos a la hora de compartir el recordatorio
     fun obtenerContactos() {
         val userId = auth.currentUser?.uid ?: return
         val usuarioDocRef = firestore.collection("Users").document(userId)
@@ -218,7 +212,7 @@ class SelectedReminderViewModel @Inject constructor(
             }
         }
     }
-
+//Metodo que selecciona el contacto al que quieres compartir
     fun toggleSeleccionAmigo(amigoRef: String) {
         val currentList = _seleccionados.value.toMutableList()
 
@@ -232,8 +226,6 @@ class SelectedReminderViewModel @Inject constructor(
             currentList.add(refAmigo)
         }
         _seleccionados.value = currentList
-
-        Log.d("toggleSeleccionAmigo", "Amigos seleccionados actuales: ${_seleccionados.value.map { it.id }}")
     }
 
     fun limpiarSeleccionAmigos() {
@@ -263,7 +255,6 @@ class SelectedReminderViewModel @Inject constructor(
             val recordatorioRef = usuarioRef
                 .collection("Reminders")
                 .document(recordatorioId)
-            Log.d("compartirRecordatorio", "Amigos seleccionados: $amigosSeleccionados")
 
             if (amigosSeleccionados.isEmpty()) {
                 Log.w("compartirRecordatorio", "No hay amigos seleccionados. No se compartira a nadie.")
@@ -274,7 +265,6 @@ class SelectedReminderViewModel @Inject constructor(
 
                 amigoDocRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido a recordatorios_disponibles de ${amigoRef.id}")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al añadir a recordatorios_disponibles de ${amigoRef.id}: ${e.message}")
@@ -290,7 +280,6 @@ class SelectedReminderViewModel @Inject constructor(
 
                 firestore.collection("Notification").add(notificacion)
                     .addOnSuccessListener { doc ->
-                        Log.d("compartirRecordatorio", "Notificación creada para ${amigoRef.id}: ${doc.id}")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al crear notificación para ${amigoRef.id}: ${e.message}")
@@ -299,33 +288,28 @@ class SelectedReminderViewModel @Inject constructor(
 
                 recordatorioRef.update("lista_compartidos", FieldValue.arrayUnion(amigoRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido ${amigoRef.id} a lista_compartidos de $recordatorioId")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al añadir a lista_compartidos: ${e.message}")
                     }
 
                 programarNotificacion(context, recordatorio, amigoRef.id.hashCode())
-                Log.d("compartirRecordatorio", "Notificación programada para ${amigoRef.id}")
             }
 
             recordatorioRef.update("esta_Compartido", true)
                 .addOnSuccessListener {
-                    Log.d("compartirRecordatorio", "Recordatorio $recordatorioId marcado como compartido")
                 }
                 .addOnFailureListener { e ->
                     Log.e("compartirRecordatorio", "Error al actualizar esta_Compartido: ${e.message}")
                 }
 
             limpiarSeleccionAmigos()
-            Log.d("compartirRecordatorio", "Selección de amigos limpiada")
             onCompartido()
-            Log.d("compartirRecordatorio", "Proceso completado correctamente")
         }.addOnFailureListener { e ->
             Log.e("compartirRecordatorio", "Error al obtener datos del usuario: ${e.message}")
         }
     }
-
+//Metodo que programa la notificacion para otros usuarios
     @SuppressLint("ScheduleExactAlarm")
     private fun programarNotificacion(context: Context, recordatorio: Recordatorio, uniqueId: Int) {
         val fechaString = recordatorio.fecha

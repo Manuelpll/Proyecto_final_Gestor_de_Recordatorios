@@ -2,6 +2,9 @@ package com.example.proyecto_gestion_de_recordatorios.navegation
 
 import kotlinx.serialization.Serializable
 
+/**
+ * Archivo con todos los objetos para navegar entre pantallas
+ */
 @Serializable
 object InitialScreen
 

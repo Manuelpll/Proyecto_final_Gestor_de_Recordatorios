@@ -34,6 +34,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.button_login_newfr
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.text_to_initial
 import com.google.firebase.auth.FirebaseAuth
 
+/**
+ * Inicio de sesion de la Aplicacion
+ */
 @Composable
 fun LoginScreen(
     navegateToHome: () -> Unit = {},

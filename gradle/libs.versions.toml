@@ -20,7 +20,7 @@ services="4.4.2"
 crashlytics="3.0.2"
 #Hilt
 hilt = "2.50"
-hiltCompiler = "1.2.0" # versión para Hilt Navigation Compose compatible con KSP
+hiltCompiler = "1.2.0"
 ksp = "1.9.23-1.0.20"
 
 [libraries]
@@ -55,7 +55,9 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+#Navegacion tipos seguros
 jetbrainsKotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+#Firebase
 googleServices = { id = "com.google.gms.google-services", version.ref = "services" }
 crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
 #Hilt

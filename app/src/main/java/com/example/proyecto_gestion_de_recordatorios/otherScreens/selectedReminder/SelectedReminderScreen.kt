@@ -1,7 +1,6 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.selectedReminder
 
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +60,6 @@ import coil.compose.AsyncImage
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.background_rnrfc
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateListOf
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.reminder_compatir
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,7 +68,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
 import coil.compose.rememberAsyncImagePainter
 import com.example.proyecto_gestion_de_recordatorios.data.Recordatorio
+import com.example.proyecto_gestion_de_recordatorios.ui.theme.selectedreminder_compartir
 
+/**
+ * Pantalla que muestra el recordatorio que selecionaste con más informacion
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectedReminderScreen(
@@ -259,7 +261,7 @@ fun SelectedReminderScreen(
                                         recordatorioACompartir = reminder
                                         showCompartirDialog = true
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir)
+                                    colors = ButtonDefaults.buttonColors(containerColor = selectedreminder_compartir)
                                 ) {
                                     Text("Compartir")
                                 }
@@ -371,7 +373,6 @@ fun SelectedReminderScreen(
 
                                 Button(
                                     onClick = {
-                                        Log.d("UI", "Amigos seleccionados antes de compartir: ${viewModel.amigosSeleccionados}")
                                         recordatorioACompartir?.let { recordatorio ->
                                             viewModel.compartirRecordatorio(recordatorio, context) {
                                                 Toast.makeText(context, "Recordatorio compartido correctamente", Toast.LENGTH_SHORT).show()

@@ -9,6 +9,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Modulo que probe los objetos de FirebaseAuth, FirebaseFirestore y FirebaseStorage a Hilt
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object FirebaseModule {

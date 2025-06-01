@@ -29,6 +29,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
 
+/**
+ * ViewModel de la NewReminderScreen
+ */
 @HiltViewModel
 class NewReminderViewModel @Inject constructor(
     private val auth: FirebaseAuth,
@@ -125,14 +128,11 @@ class NewReminderViewModel @Inject constructor(
         Color(0xFFBDBDBD),
         Color(0xFF9E9E9E),
         Color(0xFF757575),
-        Color(0xFF616161),
-        Color(0xFF424242),
-        Color(0xFF212121),
-        Color(0xFF000000)
-    )
+        Color(0xFF616161)
+        )
 
     val prioridades = listOf("Baja", "Media", "Alta")
-
+//Metodo para crear el recordatorio
     fun guardarRecordatorio(
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
@@ -252,7 +252,7 @@ class NewReminderViewModel @Inject constructor(
             }
     }
 
-
+//Metodo para programar la notificación
     @SuppressLint("ScheduleExactAlarm")
     private fun programarNotificacion(context: Context, recordatorio: Recordatorio) {
         val fechaString = recordatorio.fecha

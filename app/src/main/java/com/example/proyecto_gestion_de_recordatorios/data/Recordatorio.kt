@@ -1,6 +1,8 @@
 package com.example.proyecto_gestion_de_recordatorios.data
 
-
+/**
+ * Data class para almacenar los recordatorios
+ */
 data class Recordatorio(
     val id: String = "",
     val titulo: String? = "",

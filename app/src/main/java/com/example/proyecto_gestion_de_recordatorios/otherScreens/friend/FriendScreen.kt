@@ -50,6 +50,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.default_button_color
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.initial_28
 
+/**
+ * Pantalla que muestra todos los amigos agregados
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendScreen(

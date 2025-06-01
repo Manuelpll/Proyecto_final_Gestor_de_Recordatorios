@@ -45,7 +45,9 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.default_button_col
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.register_button
 import com.google.firebase.auth.FirebaseAuth
 
-
+/**
+ * Pantalla para registrarse en la aplicacion
+ */
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun RegisterScreen(
@@ -163,7 +165,7 @@ fun RegisterScreen(
         )
     }
 }
-
+//Boton para crear la cuenta
 @Composable
 fun CustomButton(
     text: String,

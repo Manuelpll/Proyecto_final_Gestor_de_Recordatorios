@@ -1,5 +1,8 @@
 package com.example.proyecto_gestion_de_recordatorios.data
 
+/**
+ * Dataclass para almacenar los datos del usuario
+ */
 data class Usuario(
     val uid:String?= null,
     val nombre:String,

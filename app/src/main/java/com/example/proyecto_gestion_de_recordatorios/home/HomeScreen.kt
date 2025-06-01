@@ -51,6 +51,7 @@ fun HomeScreen(
     navegateToProfile: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    //Zona de inicializacion de variables
     val recordatorios by remember { derivedStateOf { viewModel.recordatorios } }
     val profileImageUrl by viewModel.profileImageUrl
 
@@ -138,6 +139,7 @@ fun HomeScreen(
         },
         containerColor = background_home
     ) { innerPadding ->
+        //Columna que muestra cada recordatorio
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
@@ -153,6 +155,9 @@ fun HomeScreen(
     }
 }
 
+/**
+ * Funcion que se utiliza para estructurar cada recordatorio
+ */
 @Composable
 fun ReminderCard(recordatorio: Recordatorio,navegateToSelectedReminder: () -> Unit) {
     val colorRecordatorio = try {

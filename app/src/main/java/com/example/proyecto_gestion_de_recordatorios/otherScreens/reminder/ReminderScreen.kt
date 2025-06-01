@@ -1,7 +1,6 @@
 package com.example.proyecto_gestion_de_recordatorios.otherScreens.reminder
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -75,7 +74,10 @@ import com.example.proyecto_gestion_de_recordatorios.ui.theme.bar
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.floating_button_reminder
 import com.example.proyecto_gestion_de_recordatorios.ui.theme.reminder_compatir
 
- @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla para mostrar todos los recordatorios visbles para ti
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ReminderScreen(
@@ -284,7 +286,6 @@ fun ReminderScreen(
 
                                 Button(
                                     onClick = {
-                                        Log.d("UI", "Amigos seleccionados antes de compartir: ${viewModel.amigosSeleccionados}")
                                         recordatorioACompartir?.let { recordatorio ->
                                             viewModel.compartirRecordatorio(recordatorio, context) {
                                                 Toast.makeText(context, "Recordatorio compartido correctamente", Toast.LENGTH_SHORT).show()

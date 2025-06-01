@@ -74,6 +74,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    //Imagenes descargadas de internet
     implementation(libs.coil.compose)
     //Navegacion
     implementation(libs.androidx.navigation.compose)
@@ -87,7 +88,7 @@ dependencies {
     implementation(libs.firebase.storage)
     //Hilt con Kps
     implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler) // Usa KSP, no kapt
+    ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
 }

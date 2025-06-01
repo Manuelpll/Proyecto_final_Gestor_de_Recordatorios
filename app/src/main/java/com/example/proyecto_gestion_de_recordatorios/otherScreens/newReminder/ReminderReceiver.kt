@@ -10,6 +10,9 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.proyecto_gestion_de_recordatorios.R
 
+/**
+ * Clase para crear la notificacion
+ */
 class ReminderReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -28,7 +31,6 @@ class ReminderReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Intent para abrir la app al tocar la notificación (opcional)
         val notificationIntent = Intent(context, Class.forName("com.example.proyecto_gestion_de_recordatorios.MainActivity"))
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -37,7 +39,6 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Crear la notificación
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.gestion_de_recordatorios_bordes_redondeados)
             .setContentTitle("Recordatorio")
@@ -46,7 +47,7 @@ class ReminderReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        // Mostrar la notificación
+
         notificationManager.notify(titulo.hashCode(), notification)
     }
 }
