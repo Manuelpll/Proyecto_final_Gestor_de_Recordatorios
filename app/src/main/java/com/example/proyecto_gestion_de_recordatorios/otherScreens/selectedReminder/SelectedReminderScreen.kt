@@ -255,7 +255,10 @@ fun SelectedReminderScreen(
 
                             Row(horizontalArrangement = Arrangement.Center) {
                                 Button(
-                                    onClick = { showCompartirDialog = true },
+                                    onClick = {
+                                        recordatorioACompartir = reminder
+                                        showCompartirDialog = true
+                                    },
                                     colors = ButtonDefaults.buttonColors(containerColor = reminder_compatir)
                                 ) {
                                     Text("Compartir")

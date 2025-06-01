@@ -249,43 +249,44 @@ class ReminderViewModel @Inject constructor(
                 Log.w("compartirRecordatorio", "No hay amigos seleccionados. No se compartira a nadie.")
             }
 
-            amigosSeleccionados.forEach { amigoId ->
-                Log.d("compartirRecordatorio", "Iterando con amigoRef: $amigoId (id=${amigoId.id})")
-                val amigoRef = firestore.collection("Users").document(amigoId.toString())
+            amigosSeleccionados.forEach { amigoRef ->
+                val amigoDocRef = firestore.collection("Users").document(amigoRef.id)
 
-                amigoRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef.path))
+                amigoDocRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido a recordatorios_disponibles de $amigoId")
+                        Log.d("compartirRecordatorio", "Añadido a recordatorios_disponibles de ${amigoRef.id}")
                     }
                     .addOnFailureListener { e ->
-                        Log.e("compartirRecordatorio", "Error al añadir a recordatorios_disponibles de $amigoId: ${e.message}")
+                        Log.e("compartirRecordatorio", "Error al añadir a recordatorios_disponibles de ${amigoRef.id}: ${e.message}")
                     }
+
 
                 val notificacion = mapOf(
                     "descripcion" to (recordatorio.titulo ?: "Recordatorio sin título"),
-                    "usuario" to amigoRef.path,
+                    "usuario" to amigoRef,
                     "recordatorio" to recordatorioRef,
                     "fechaCreacion" to FieldValue.serverTimestamp()
                 )
 
                 firestore.collection("Notification").add(notificacion)
                     .addOnSuccessListener { doc ->
-                        Log.d("compartirRecordatorio", "Notificación creada para $amigoId: ${doc.id}")
+                        Log.d("compartirRecordatorio", "Notificación creada para ${amigoRef.id}: ${doc.id}")
                     }
                     .addOnFailureListener { e ->
-                        Log.e("compartirRecordatorio", "Error al crear notificación para $amigoId: ${e.message}")
+                        Log.e("compartirRecordatorio", "Error al crear notificación para ${amigoRef.id}: ${e.message}")
                     }
 
-                recordatorioRef.update("lista_compartidos", FieldValue.arrayUnion(amigoRef.id))
+
+                recordatorioRef.update("lista_compartidos", FieldValue.arrayUnion(amigoRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido $amigoId a lista_compartidos de $recordatorioId")
+                        Log.d("compartirRecordatorio", "Añadido ${amigoRef.id} a lista_compartidos de $recordatorioId")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al añadir a lista_compartidos: ${e.message}")
                     }
 
-                programarNotificacion(context, recordatorio, amigoId.hashCode())
-                Log.d("compartirRecordatorio", "Notificación programada para $amigoId")
+                programarNotificacion(context, recordatorio, amigoRef.id.hashCode())
+                Log.d("compartirRecordatorio", "Notificación programada para ${amigoRef.id}")
             }
 
             recordatorioRef.update("esta_Compartido", true)

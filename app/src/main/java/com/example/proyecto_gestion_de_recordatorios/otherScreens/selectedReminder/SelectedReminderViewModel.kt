@@ -74,17 +74,53 @@ class SelectedReminderViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val uid = auth.currentUser?.uid ?: return@launch
-                val snapshot = firestore.collection("Users")
+
+                val userSnapshot = firestore.collection("Users")
                     .document(uid)
-                    .collection("Reminders")
-                    .document(id)
                     .get()
                     .await()
 
-                val recordatorio = snapshot.toObject(Recordatorio::class.java)
-                _selectedReminder.value = recordatorio
+                val recordatoriosDisponiblesRefs = userSnapshot.get("recordatorios_disponibles") as? List<DocumentReference> ?: emptyList()
+
+                val rutaRecordatorio = recordatoriosDisponiblesRefs.find { it.id == id }?.path
+
+                if (rutaRecordatorio != null) {
+                    val snapshot = firestore.document(rutaRecordatorio)
+                        .get()
+                        .await()
+
+                    if (snapshot.exists()) {
+                        val data = snapshot.data
+                        if (data != null) {
+                            // Conversión manual de los campos relevantes, ignorando lista_compartidos
+                            val recordatorio = Recordatorio(
+                                id = data["id"] as? String ?: "",
+                                titulo = data["titulo"] as? String ?: "",
+                                descripcion = data["descripcion"] as? String ?: "",
+                                fecha = data["fecha"] as? String ?: "",
+                                prioridad = data["prioridad"] as? String ?: "",
+                                color = data["color"] as? String ?: "",
+                                color_de_la_categoria = data["color_de_la_categoria"] as? String ?: "",
+                                esFavorito = data["esFavorito"] as? Boolean ?: false,
+                                esta_Compartido = data["esta_Compartido"] as? Boolean ?: false,
+                                compartidoPor = data["compartidoPor"] as? String ?: ""
+                            )
+                            _selectedReminder.value = recordatorio
+                        } else {
+                            Log.e("ViewModel", "No se encontraron datos en la ruta: $rutaRecordatorio")
+                            _selectedReminder.value = null
+                        }
+                    } else {
+                        Log.e("ViewModel", "No se encontró el recordatorio en la ruta: $rutaRecordatorio")
+                        _selectedReminder.value = null
+                    }
+                } else {
+                    Log.e("ViewModel", "El id $id no está disponible para el usuario actual.")
+                    _selectedReminder.value = null
+                }
             } catch (e: Exception) {
                 Log.e("ViewModel", "Error al cargar recordatorio: ${e.message}")
+                _selectedReminder.value = null
             }
         }
     }
@@ -233,43 +269,44 @@ class SelectedReminderViewModel @Inject constructor(
                 Log.w("compartirRecordatorio", "No hay amigos seleccionados. No se compartira a nadie.")
             }
 
-            amigosSeleccionados.forEach { amigoId ->
-                Log.d("compartirRecordatorio", "Iterando con amigoRef: $amigoId (id=${amigoId.id})")
-                val amigoRef = firestore.collection("Users").document(amigoId.toString())
+            amigosSeleccionados.forEach { amigoRef ->
+                val amigoDocRef = firestore.collection("Users").document(amigoRef.id)
 
-                amigoRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef.path))
+                amigoDocRef.update("recordatorios_disponibles", FieldValue.arrayUnion(recordatorioRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido a recordatorios_disponibles de $amigoId")
+                        Log.d("compartirRecordatorio", "Añadido a recordatorios_disponibles de ${amigoRef.id}")
                     }
                     .addOnFailureListener { e ->
-                        Log.e("compartirRecordatorio", "Error al añadir a recordatorios_disponibles de $amigoId: ${e.message}")
+                        Log.e("compartirRecordatorio", "Error al añadir a recordatorios_disponibles de ${amigoRef.id}: ${e.message}")
                     }
+
 
                 val notificacion = mapOf(
                     "descripcion" to (recordatorio.titulo ?: "Recordatorio sin título"),
-                    "usuario" to amigoRef.path,
+                    "usuario" to amigoRef,
                     "recordatorio" to recordatorioRef,
                     "fechaCreacion" to FieldValue.serverTimestamp()
                 )
 
                 firestore.collection("Notification").add(notificacion)
                     .addOnSuccessListener { doc ->
-                        Log.d("compartirRecordatorio", "Notificación creada para $amigoId: ${doc.id}")
+                        Log.d("compartirRecordatorio", "Notificación creada para ${amigoRef.id}: ${doc.id}")
                     }
                     .addOnFailureListener { e ->
-                        Log.e("compartirRecordatorio", "Error al crear notificación para $amigoId: ${e.message}")
+                        Log.e("compartirRecordatorio", "Error al crear notificación para ${amigoRef.id}: ${e.message}")
                     }
 
-                recordatorioRef.update("lista_compartidos", FieldValue.arrayUnion(amigoRef.id))
+
+                recordatorioRef.update("lista_compartidos", FieldValue.arrayUnion(amigoRef))
                     .addOnSuccessListener {
-                        Log.d("compartirRecordatorio", "Añadido $amigoId a lista_compartidos de $recordatorioId")
+                        Log.d("compartirRecordatorio", "Añadido ${amigoRef.id} a lista_compartidos de $recordatorioId")
                     }
                     .addOnFailureListener { e ->
                         Log.e("compartirRecordatorio", "Error al añadir a lista_compartidos: ${e.message}")
                     }
 
-                programarNotificacion(context, recordatorio, amigoId.hashCode())
-                Log.d("compartirRecordatorio", "Notificación programada para $amigoId")
+                programarNotificacion(context, recordatorio, amigoRef.id.hashCode())
+                Log.d("compartirRecordatorio", "Notificación programada para ${amigoRef.id}")
             }
 
             recordatorioRef.update("esta_Compartido", true)
