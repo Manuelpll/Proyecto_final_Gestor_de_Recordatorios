@@ -128,7 +128,7 @@ class NewCategoryViewModel @Inject constructor(
 
         val categoria = hashMapOf(
             "nombre" to nombre,
-            "color" to "#"+colores[colorIndex.toInt()].toArgb().toUInt().toString(16),
+            "color" to colores[colorIndex.toInt()].toArgb().toUInt().toString(16),
             "usuarioId" to userId,
             "recordatorios_pertenecientes" to  recordatorios_categoria
         )

@@ -180,7 +180,6 @@ class NewReminderViewModel @Inject constructor(
             try {
                 val userDoc = firestore.collection("Users").document(uid)
                 val userSnapshot = userDoc.get().await()
-
                 if (!userSnapshot.exists()) {
                     userDoc.set(hashMapOf("creado" to true)).await()
                 }
@@ -194,7 +193,19 @@ class NewReminderViewModel @Inject constructor(
 
 
                 userDoc.update("recordatorios_disponibles", FieldValue.arrayUnion(docRef)).await()
+                categoriaSeleccionada?.let { categoriaNombre ->
+                    val categoriaQuery = firestore.collection("Categories")
+                        .whereEqualTo("nombre", categoriaNombre)
+                        .get()
+                        .await()
 
+                    if (!categoriaQuery.isEmpty) {
+                        val categoriaDoc = categoriaQuery.documents.first().reference
+                        categoriaDoc.update("recordatorios_pertenecientes", FieldValue.arrayUnion(docRef)).await()
+                    } else {
+                        Log.w("Categorias", "No se encontró la categoría con nombre '$categoriaNombre'")
+                    }
+                }
 
                 firestore.collection("Notification").add(
                     mapOf(

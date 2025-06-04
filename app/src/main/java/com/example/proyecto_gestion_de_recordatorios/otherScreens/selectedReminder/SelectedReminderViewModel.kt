@@ -103,6 +103,7 @@ class SelectedReminderViewModel @Inject constructor(
                                 color = data["color"] as? String ?: "",
                                 color_de_la_categoria = data["color_de_la_categoria"] as? String ?: "",
                                 esFavorito = data["esFavorito"] as? Boolean ?: false,
+                                esEditable = data["esEditable"] as? Boolean ?: false,
                                 esta_Compartido = data["esta_Compartido"] as? Boolean ?: false,
                                 compartidoPor = data["compartidoPor"] as? String ?: ""
                             )
@@ -126,38 +127,47 @@ class SelectedReminderViewModel @Inject constructor(
         }
     }
 //Metodo que edita algunos campos del recordatorio
-    fun editarTituloYDescripcion(
-        nuevoTitulo: String,
-        nuevaDescripcion: String,
-        id_recordatorio: String
-    ) {
-        val uid = auth.currentUser?.uid ?: return
+fun editarTituloYDescripcion(
+    nuevoTitulo: String,
+    nuevaDescripcion: String,
+    id_recordatorio: String
+) {
+    val uid = auth.currentUser?.uid ?: return
 
-        if (id_recordatorio.isBlank()) {
-            Log.e("ViewModel", "ID del recordatorio recibido es nulo o vacío. No se puede actualizar.")
-            return
-        }
+    if (id_recordatorio.isBlank()) {
+        Log.e("ViewModel", "ID del recordatorio recibido es nulo o vacío. No se puede actualizar.")
+        return
+    }
 
-        val reminderRef = firestore.collection("Users")
-            .document(uid)
-            .collection("Reminders")
-            .document(id_recordatorio)
+    viewModelScope.launch {
+        try {
+            val userSnapshot = firestore.collection("Users")
+                .document(uid)
+                .get()
+                .await()
 
-        viewModelScope.launch {
-            try {
-                reminderRef.update(
+            val recordatoriosDisponiblesRefs =
+                userSnapshot.get("recordatorios_disponibles") as? List<DocumentReference> ?: emptyList()
+
+            val rutaRecordatorio = recordatoriosDisponiblesRefs.find { it.id == id_recordatorio }?.path
+
+            if (rutaRecordatorio != null) {
+                val recordatorioRef = firestore.document(rutaRecordatorio)
+                recordatorioRef.update(
                     mapOf(
                         "titulo" to nuevoTitulo,
                         "descripcion" to nuevaDescripcion
                     )
                 ).await()
                 loadReminderById(id_recordatorio)
-            } catch (e: Exception) {
-                Log.e("ViewModel", "Error al editar recordatorio: ${e.message}")
+            } else {
+                Log.e("ViewModel", "El id $id_recordatorio no está en el campo 'recordatorios_disponibles'. No se puede actualizar.")
             }
+        } catch (e: Exception) {
+            Log.e("ViewModel", "Error al editar recordatorio: ${e.message}")
         }
     }
-
+}
     fun loadProfilePhoto() {
         viewModelScope.launch {
             try {

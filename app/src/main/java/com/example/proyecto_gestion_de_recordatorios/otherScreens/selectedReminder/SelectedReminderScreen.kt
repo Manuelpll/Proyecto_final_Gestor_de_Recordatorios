@@ -246,9 +246,9 @@ fun SelectedReminderScreen(
 
 
                             if (it.esta_Compartido == true && it.compartidoPor != nombreUsuario) {
-                                it.compartidoPor?.let { nombre ->
+                                it.compartidoPor?.let { id ->
                                     Spacer(Modifier.height(4.dp))
-                                    Text(text = "Compartido por: $nombre", fontSize = 12.sp)
+                                    Text(text = "Compartido por: $id", fontSize = 12.sp)
                                 }
                             }
 
