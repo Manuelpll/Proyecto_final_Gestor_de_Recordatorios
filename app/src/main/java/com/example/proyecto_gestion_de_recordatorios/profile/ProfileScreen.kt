@@ -110,18 +110,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-
-            // ID personal
-            Text(
-                text = "Id personal: $userId",
-                fontSize = 14.sp,
-                modifier = Modifier
-                    .padding(top = 4.dp)
-                    .background(Color.White, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Tarjeta con datos
             Card(
