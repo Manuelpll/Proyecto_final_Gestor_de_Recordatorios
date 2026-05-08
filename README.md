@@ -40,7 +40,12 @@ Tecnologías utilizadas:
 - 👤 Perfil  
 ---
 ## 🗃️ Modelo de datos
-- Users: En esta colección se almacenará toda la información del usuario además de el array donde se almacenan los uid de los amigos agregados en la app y la subcolección de Reminders.
-- Reminders: En esta subcolección se almacenará todos los recordatorios creados por el usuario dentro de cada documento hay un array con los uid de las personas que se le ha compartido el recordatorio junto con un campo que muestra quien es el creador del recordatorio y la categoría que tiene si tiene alguna.
-- Categories: En esta colección se almacenará cada categoría con los recordatorios pertenecientes y el id del usuario que creó la categoría.
-- Notification: En esta colección está la información de cada notificación que se envía de aviso al recordatorio donde está la descripción de la notificación, el usuario a quien se le va ha enviar y la fecha de creación de la notificación junto con el recordatorio del que está notificando.
+- _Users_: En esta colección se almacenará toda la información del usuario además de el array donde se almacenan los uid de los amigos agregados en la app y la subcolección de Reminders.
+  
+- _Reminders_: En esta subcolección se almacenará todos los recordatorios creados por el usuario dentro de cada documento hay un array con los uid de las personas que se le ha compartido el recordatorio junto con un campo que muestra quien es el creador del recordatorio y la categoría que tiene si tiene alguna.
+  
+- _Categories_: En esta colección se almacenará cada categoría con los recordatorios pertenecientes y el id del usuario que creó la categoría.
+  
+- _Notification_: En esta colección está la información de cada notificación que se envía de aviso al recordatorio donde está la descripción de la notificación, el usuario a quien se le va ha enviar y la fecha de creación de la notificación junto con el recordatorio del que está notificando.
+---
+ En el caso de querer saber más acerca del proyecto mira la carpeta __Recursos del extras en el desarrollo de la App__.
